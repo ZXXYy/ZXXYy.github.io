@@ -1,0 +1,22 @@
+---
+title:      "Hello 2023"
+date:       2023-04-10 12:00:00
+author:     zxy
+categories: [Life]
+tags: [meta]
+---
+
+> “Yeah It's on. ”
+
+Zxy 的 Blog 就这么开通了。
+只想找个没人的角落，随便写点啥，记录代码和生活。
+
+之前在[博客园](https://www.cnblogs.com/zxyLeaf/)上写过一些东西，但是总觉得不大好用。一是本地写完的markdown传到网站上，总会遇到一些排版的问题，图片也很难处理。二是一般在博客园上只发编程相关blog，现在想记录work&life。
+
+看到了github.io，可以定制化又可以在本地管理，觉得非常适合用来当个人博客！
+
+使用了[Huxpro](https://github.com/Huxpro/huxpro.github.io)提供的`Jekyll`主题搭建了一个博客，算是一个开始吧～
+
+Reference
+-------
+[how to set up your github io blog](https://keysaim.github.io/post/blog/2017-08-15-how-to-setup-your-github-io-blog/)
