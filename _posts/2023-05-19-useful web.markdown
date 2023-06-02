@@ -23,6 +23,3 @@ tags: ["tools"]
 2. [Machine learning for software engineering](https://github.com/saltudelft/ml4se)
 3. [github ssh key config](https://docs.github.com/zh/authentication/connecting-to-github-with-ssh/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent)
 4. [OS development wiki](https://wiki.osdev.org/Main_Page)
-
-
-
