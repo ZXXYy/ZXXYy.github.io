@@ -9,6 +9,7 @@ tags: ["debugging", "tools"]
 
 GNU调试器（英语：GNU Debugger，缩写：gdb）是一个由GNU开源组织发布的、UNIX/LINUX操作 系统下的、基于命令行的、功能强大的程序调试工具。
 总的来说，gdb有以下4个功能：
+
 - 启动程序，并指定可能影响其行为的所有内容
 - 使程序在指定条件下停止
 - 检查程序停止时发生了什么
@@ -19,11 +20,15 @@ gdb需要被调试的程序中含有debugging的信息，因此在用gcc编译�
 ```shell
 gcc [other flags] -g <source files> -o <output file>
 ```
+
 使用`objcopy`来分离调试信息
+
 ```shell
 objcopy --only-keep-debug <output file> xxx.debug
 ```
+
 使用`strip`来删除原文件里的调试信息
+
 ```shell
 strip --strip-debug --strip-unneeded <output file>
 ```
@@ -31,8 +36,10 @@ strip --strip-debug --strip-unneeded <output file>
 ## GDB常见指令
 
 ### 一般设置
+
 **(gdb)** start：单步执行，运行程序，停在第一执行语句
 **(gdb)** run：重新开始运行文件，简写r
+
 - run-text：加载文本文件
 - run-bin：加载二进制文件
 
@@ -40,6 +47,7 @@ strip --strip-debug --strip-unneeded <output file>
 
 
 ### 断点设置相关指令
+
 **(gdb)** break：设置断点
 
 - 断在具体的函数 `break func`
@@ -49,7 +57,7 @@ strip --strip-debug --strip-unneeded <output file>
 
 **(gdb)** watch my_var 在变量上设置断点，当该变量被修改(write)时断住程序
 
-**(gdb)** rwatch *<memory address> 在指定内存上设置断点，当该内存被访问(read)时断住程序
+**(gdb)** rwatch 在指定内存上设置断点，当该内存被访问(read)时断住程序
 - `rwatch *(int *)0xfeedface` 指定watch的内存长度
 
 **(gdb)** awatch *0xfeedface 在指定内存上设置断点，当该内存被访问/修改(read/write)时断住程序
