@@ -23,6 +23,9 @@ order: 5
   - [longjin](https://longjin666.cn/)
   - [Terenceli](https://terenceli.github.io/)
 
+- Security
+  - [pwn.college](https://pwn.college/)
+
 - AI
 
   - [莫烦Python](https://mofanpy.com/)
