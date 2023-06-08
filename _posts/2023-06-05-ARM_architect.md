@@ -5,6 +5,7 @@ author:     zxy
 math: true
 categories: ["Coding", "System", "ARM"]
 tags: ["ARM"]
+post: true
 ---
 
 Arm生态下的术语(terms)五花八门，时常更新...这直接导致刚刚接触的Arm的人会晕头转向，各种各样的名词扑面而来，完全分不清什么是什么。这篇post总结了Arm生态下的一些名词帮助理解。

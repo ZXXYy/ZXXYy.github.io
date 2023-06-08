@@ -5,6 +5,7 @@ date:       2023-05-19 14:00:00
 author:     zxy
 categories: ["Coding", "Tools"]
 tags: ["tools"]
+post: true
 ---
 
 # Shortcuts on Macos

@@ -5,6 +5,7 @@ author:     zxy
 categories: ["Coding", "Python"]
 tags: ["Python"]
 mathjax: true
+post: false
 ---
 
 

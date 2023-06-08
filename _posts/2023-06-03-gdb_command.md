@@ -5,6 +5,7 @@ date:       2023-06-03 09:00:00
 author:     zxy
 categories: ["Coding", "Tools"]
 tags: ["debugging", "tools"]
+post: true
 ---
 
 GNU调试器（英语：GNU Debugger，缩写：gdb）是一个由GNU开源组织发布的、UNIX/LINUX操作 系统下的、基于命令行的、功能强大的程序调试工具。

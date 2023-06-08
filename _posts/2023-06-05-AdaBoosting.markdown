@@ -5,6 +5,7 @@ author:     zxy
 math: true
 categories: ["Coding", "AI"]
 tags: ["AI"]
+post: true
 ---
 
 ## High-Level ideas
