@@ -41,3 +41,7 @@ order: 4
 # 文学
 
 - 1984
+
+# 理财
+
+- [Pricing Money](http://www.jdawiseman.com/books/pricing-money/Pricing_Money_JDAWiseman.html?utm_source=hackernewsletter&utm_medium=email&utm_term=fav)
