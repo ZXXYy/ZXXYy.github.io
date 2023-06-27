@@ -89,7 +89,7 @@ qemu-system-x86_64 -hda /path/to/hda.img -net nic,model=e1000,netdev=foo -netdev
 
 后续的blog会通过一些简单的实验来理解这四种网络连接方式、原理以及QEMU相关源码分析。
 
-1. User mode netwroking
+1. [User mode netwroking](https://zxxyy.github.io/posts/qemu-network-slirp/)
 2. Tap networking
 3. socket networking
 4. Virtio networking
