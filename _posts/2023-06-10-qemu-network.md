@@ -1,5 +1,5 @@
 ---
-title:      "VM中的网络连接--以qemu为例(TBC)"
+title:      "QEMU/KVM中的网络虚拟化--Part1 Overview"
 date:       2023-06-24 09:00:00
 author:     zxy
 math: true
@@ -7,9 +7,7 @@ categories: ["Coding", "Network"]
 tags: ["vm", "network"]
 post: true
 ---
-[libvirt](https://libvirt.org/)--virtualization API:Exposes a consistent API atop many virtualization technologies. APIs are consumed by client tools for provisioning and managing VMs.
-virt-manager--GUI to manage KVM, qemu/kvm, xen, and lxc.
-virtio
+这是个网络虚拟化系列博客从最基础的QEMU网络虚拟化的配置，逐步介绍网络虚拟化技术类型、原理和源码实现。这篇博客是网络虚拟化系列博客的第一篇，主要介绍QEMU中对网络虚拟化相关的high-level ideas、QEMU中网络参数的配置说明以及概括了不同的网络连接方式。
 
 ## Prerequist & Important terms to know
 
@@ -19,8 +17,10 @@ virtio
 ## basic network command
 
 1. `hostname -I` 查看本机IP地址
-2. `brctl show`
-3. `arping`
+2. `ip a`
+3. `ip route`
+4. `brctl show`
+5. `arping`
 
 ## High-level ideas
 
@@ -75,55 +75,25 @@ qemu-system-x86_64 -hda /path/to/hda.img -net nic,model=e1000,netdev=foo -netdev
 
 > By default QEMU will create a SLiRP user network backend and an appropriate virtual network device for the guest (eg an E1000 PCI card for most x86 PC guests), as if you had typed `-net nic -net user` on your command line.
 
+## VM网络连接方式
+根据QEMU对后端设备的不同实现，guests总共有四种方式和外部网络进行通讯：user mode, socket redirection, Tap and VDE networking.
 
-一般来说，虚拟机-同一host上的其他虚拟机-host-host所在局域网-外部网络进行网络连接，从而进行通讯。
+一般来说，对虚拟机而言，外部网络可以分为host, 其他虚拟机, 局域网(LAN)以及互联网，这四种网络连接方式可以访问的网络范围不同，所需host系统权限也不一样，这四种方式可以访问的网络概括及所需host权限总结如下：
 
+| Mode         | Privilege | VM→Host | **VM←Host** | **VM1↔VM2** | **VM→Net/LAN** | **VM←Net/LAN** |
+| ------------ | --------- | ------- | ----------- | ----------- | -------------- | -------------- |
+| User (Slirp) | user      | +       | 端口转发    | -           | +              | 端口转发       |
+| Socket       |           |         |             |             |                |                |
+| Tap          |           |         |             |             |                |                |
+| VDE          |           |         |             |             |                |                |
 
+后续的blog会通过一些简单的实验来理解这四种网络连接方式、原理以及QEMU相关源码分析。
 
-- virtual NICs--virbr0-nic/vnet1/vnet2: dummy interface, connected to the virtual ports on the virtual switch
-- virtual switches--virbr0: 在host中运行的switch，VM可以直接接入这个switch，layer2设备，(virtual bridge)passes frames between nodes. 
-- virtual dhcp server
+1. User mode netwroking
+2. Tap networking
+3. socket networking
+4. Virtio networking
 
-
-
-
-
-There are four ways that QEMU guests can be connected: user mode, socket redirection, Tap and VDE networking.
-
-## user networking / NAT (slirp)
-虚拟机在外部网络上共享host的IP地址，host为虚拟机发出的网络流量进行网络地址转换（NAT）。
-由qemu虚拟出一台DHCP服务器和网关，IP默认是10.0.2.2
-再给guest分配一个IP，默认是10.0.2.15
-每一台guest都有同样的私有地址
-Use case:
-
-- You want a simple way for your virtual machine to access to the host, to the internet or to resources available on your local network.
-- You don't need to access your guest from the network or from another guest.
-- You are ready to take a huge performance hit.
-- Warning: User networking does not support a number of networking features like ICMP. Certain applications (like ping) may not function properly.
-
-`qemu-system-x86_64 -hda /path/to/hda.img -netdev user,id=user.0 -device e1000,netdev=user.0`
-
-## 桥接模式--Bridge Connection
-
-### Private Virtual Bridge
-
-是一个隔离的网络
-Use case:
-
-- You want to set up a private network between 2 or more virtual machines. This network won't be seen from the other virtual machines nor from the real network.
-
-### Public Bridge
-
-虚拟机显示为局域网上的另外一台电脑，会消耗宿主所在局域网的IP地址
-Use case:
-
-- You want to assign IP addresses to your virtual machines and make them accessible from your local network
-- You also want performance out of your virtual machine
-
-## 仅主机 (host-only)
-
-## QEMU中的实现
 
 
 ## Reference
@@ -133,3 +103,5 @@ Use case:
 4. [Virtualbox virtual networking](https://www.virtualbox.org/manual/ch06.html)
 5. [VM Networking](https://joshrosso.com/docs/2020/2020-11-13-vm-networks/)
 6. [QEMU's new -nic command line option](https://www.qemu.org/2018/05/31/nic-parameter/)
+7. [QEMU cheetsheet for full emulation](https://wangziqi2013.github.io/article/2022/03/09/qemu-cheat-sheet.html)
+8. [Deep dive into Virtio-networking and vhost-net](https://www.redhat.com/en/blog/deep-dive-virtio-networking-and-vhost-net)

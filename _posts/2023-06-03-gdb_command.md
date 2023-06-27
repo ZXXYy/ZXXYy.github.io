@@ -195,17 +195,46 @@ end
 
 ## QEMU与GDB的交互
 
+### 通过GDB调试运行在QEMU中的kernel
+
 QEMU支持通过 gdb 的远程连接工具（“gdbstub”）使用 gdb。
 
 1. QEMU使用tcp协议的1234端口与GDB进行通信，以`qemu-system-riscv64`为例：
 `qemu-system-riscv64 -nographic -machine virt -kernel vmlinux -bios default -S -s`
 
-- `-s`选项表示QEMU在TCP协议的1234端口上监听来自 gdb 的传入连接
-- `-S`选项表示在gdb接入之前，guest不会被启动；即需在gdb中启动程序
+  - `-s`选项表示QEMU在TCP协议的1234端口上监听来自 gdb 的传入连接
+  - `-S`选项表示在gdb接入之前，guest不会被启动；即需在gdb中启动程序
 
-2. 在GDB中，通过`target remote localhost:1234`接入QEMU
+2. 启动GDB，加载内核符号表`gdb vmlinux` 
+在GDB中，通过`target remote localhost:1234`接入QEMU
 
 > 注意：GDB只能通过**虚拟地址**访问QEMU的内存
+
+### 通过GDB调试QEMU源码
+
+0. 编译QEMU，增加debug选项
+
+```shell
+git clone git://git.qemu-project.org/qemu.git
+cd qemu
+# 将代码切换到所需要分析的源码版本，如要分析最新版本，下面一行命令不用执行
+git checkout v6.2.0
+mkdir build && cd build
+../configure --target-list=x86_64-softmmu --enable-debug
+make
+```
+
+1. 通过GDB启动QEMU `gdb ./qemu/bin/debug/native/qemu-system-x86_64`
+  在GDB中设置QEMU运行参数
+
+  ```s
+  set args -enable-kvm -cpu host -m size=1G  -nographic -hda bionic-server-cloudimg-amd64.img -serial tcp:127.0.0.1:1234
+  ```
+
+  其中`-serial tcp:127.0.0.1:1234` 表示重定向QEMU的输出到1234端口
+2. 新建一个新终端，监听4555端口`nc -lv 1234`，该窗口中会有QEMU的输出
+3. 在GDB中设置断点如`b main`，运行QEMU程序`r`
+4. 在GDB中设置`handle SIGUSR1 noprint nostop`忽略user signal
 
 ## GDB常见报错
 
