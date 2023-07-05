@@ -81,3 +81,22 @@ static struct kvm_x86_ops vmx_x86_ops = {
 ❯ ls
 kvm-amd.ko  kvm-intel.ko  kvm.ko
 
+
+
+kvm_bindings API documentation
+
+https://docs.rs/kvm-bindings/latest/kvm_bindings/index.html
+
+https://docs.rs/kvm-ioctls/latest/kvm_ioctls/
+
+kvm create VM principle & overflow
+
+x86 cpu long mode
+
+kvm basic structures
+
+https://www.cnblogs.com/dream397/p/14294065.html
+
+https://web.stanford.edu/class/cs107/guide/x86-64.html
+
+https://www.kernel.org/doc/Documentation/virtual/kvm/api.txt
