@@ -105,3 +105,4 @@ qemu-system-x86_64 -hda /path/to/hda.img -net nic,model=e1000,netdev=foo -netdev
 6. [QEMU's new -nic command line option](https://www.qemu.org/2018/05/31/nic-parameter/)
 7. [QEMU cheetsheet for full emulation](https://wangziqi2013.github.io/article/2022/03/09/qemu-cheat-sheet.html)
 8. [Deep dive into Virtio-networking and vhost-net](https://www.redhat.com/en/blog/deep-dive-virtio-networking-and-vhost-net)
+9. [KVM Virtual Networking Concepts](https://kb.novaordis.com/index.php/KVM_Virtual_Networking_Concepts)
