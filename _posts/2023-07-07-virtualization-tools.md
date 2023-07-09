@@ -21,7 +21,7 @@ post: true
 - PaaS (Platform as a Service)：PaaS就相当于我们点了个饺子的外卖，我们需要做的事情只是上饺子。也就是说，厂商把一些软件开发的环境也配置好了，比如操作系统、中间件、运行时环境等等。也就说可以直接在这一层上根据自己的需求开发/测试自己的应用。
 - IaaS (Infrastructure as a Service)：IaaS就相当于我们去买了一袋速冻饺子，我们只需要去煮饺子、上饺子就好了。也就是说，有厂商给我们搭建好了一组服务器，我们只要向他们租一台服务器（虚拟机），直接就可以使用了，不需要再自己去买硬盘这些设备了。在这一层，最重要的技术就是虚拟化技术。
 
-![SCR-20230709-oqkh](/Users/zhengxiaoye/Library/Application Support/typora-user-images/SCR-20230709-oqkh.png)
+
 
 ## Virtualization Framework Generalized
 
