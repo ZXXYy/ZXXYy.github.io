@@ -158,9 +158,80 @@ post: true
    grep -E 'svm|vmx' /proc/cpuinfo
    ```
 
-2. 
+2. 下载必要的包
 
+   ```shell
+   sudo apt install \
+   	qemu-system-x86 \
+     libvirt-clients \
+     libvirt-daemon \
+     libvirt-daemon-system \
+     virtinst \
+     virt-manager \
+     bridge-utils
+   ```
 
+3. 添加当前用户权限：把当前用户添加到kvm, libvirt, libvirt-qemu groups
+
+   ```shell
+   sudo adduser <username> kvm
+   sudo adduser <username> libvirt
+   sudo adduser <username> libvirt-qemu
+   ```
+
+4. `virsh`命令行程序默认会使用qemu的`qemu:///user`接口，我们需要所有的客户端程序都和`qemu:///system`这个接口交互，以至于VM可以在root模式下运行。所以我们需要更改一些config:
+
+   ```shell
+   mkdir ~/.config/libvirt
+   sudo cp -rv /etc/libvirt/libvirt.conf ~/.config/libvirt/ # 拷贝默认的config
+   sudo chown <username>: ~/.config/libvirt/libvirt.conf #更改config的owner为当前用户
+   ```
+
+   编辑`~/.config/libvirt/libvirt.conf`文件
+
+   ```
+   uri_default = "qemu:///system"
+   ```
+
+5. 对于存储文件权限，打开` /etc/libvirt/qemu.conf `并将用户(假设当前用户名为foo)设置为当前并将group设置为 libvirt-qemu
+
+   ```
+   user = "foo"
+   group = "libvirt-qemu"
+   ```
+
+6. 配置并启动libvirt
+
+   ```shell
+   sudo systemctl status libvirtd # 查看libvirtd是否启动
+   sudo systemctl start libvirtd # 如果没有启动，启动libvirtd
+   sudo systemctl enable libvirtd # 设置libvirtd开机启动
+   ```
+
+7. VM image默认保存在`/var/lib/libvirt/images`, 下载一个镜像保存到`/var/lib/libvirt/isos`目录下,
+
+   ```shell
+   mkdir /var/lib/libvirt/isos 
+   cd /var/lib/libvirt/isos 
+   wget https://releases.ubuntu.com/focal/ubuntu-20.04.6-live-server-amd64.iso
+   ```
+
+8. 使用`virt-install`创建并运行一个虚拟机
+
+   ```shell
+   virt-install \
+   	--name firstVM \
+   	--ram 2048 \
+   	--disk path=/var/lib/libvirt/images/try.qcow2,size=8 \
+   	--vcpus 2 \
+   	--os-type linux \
+   	--os-variant generic \
+   	--cdrom /var/lib/libvirt/isos/ubuntu-20.04.6-live-server-amd64.iso
+   ```
+
+9. `virsh list --all` 查看所有虚拟机
+   - start, reboot, and shutdown VM - `virsh start <VM>`, `virsh reboot <VM>`, and `virsh shutdown <VM>`
+   - clone VM and create storage image - `virt-clone -o <VM> -n <new_VM> -f /var/lib/libvirt/images/<new_VM>.qcow2`
 
 >  后续如果有时间，会对kvm, libvirt, openstack, container做更加详细的介绍。
 
