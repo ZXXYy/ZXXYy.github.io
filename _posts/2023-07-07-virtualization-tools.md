@@ -4,7 +4,7 @@ date:       2023-07-07 09:00:00
 author:     zxy
 math: true
 categories: ["Coding", "System", "Virtualization"]
-tags: ["vm"]
+tags: ["vm", "Virtualization"]
 post: true
 ---
 
@@ -21,121 +21,181 @@ post: true
 - PaaS (Platform as a Service)：PaaS就相当于我们点了个饺子的外卖，我们需要做的事情只是上饺子。也就是说，厂商把一些软件开发的环境也配置好了，比如操作系统、中间件、运行时环境等等。也就说可以直接在这一层上根据自己的需求开发/测试自己的应用。
 - IaaS (Infrastructure as a Service)：IaaS就相当于我们去买了一袋速冻饺子，我们只需要去煮饺子、上饺子就好了。也就是说，有厂商给我们搭建好了一组服务器，我们只要向他们租一台服务器（虚拟机），直接就可以使用了，不需要再自己去买硬盘这些设备了。在这一层，最重要的技术就是虚拟化技术。
 
-
+![overview](/assets/img/in-post/2023-07-07-virt-tool/overview.png)
 
 ## Virtualization Framework Generalized
 
 有了上面的big picture后，我们现在更加关注IaaS层面，主要是从high-level的角度分析虚拟化相关的概念和开源工具。以下是这些工具/概念发展的时间线：
 
+![timeline](/assets/img/in-post/2023-07-07-virt-tool/timeline.png)
+
+
+接下来我们按照这条时间线，逐一介绍每一个开源工具/概念。
+
+## Tools in details
+
+### 1. [QEMU](https://wiki.qemu.org/Documentation)
+
+- Quick EMUlator，简单来说就是一个进程。
+
+- 由于不同架构的发展，如x86, arm等，就有了在一个架构上执行另外一个架构程序的需求，QEMU在最开始的时候采用**纯软件**的方式去模拟指令，即TCG，通过binary translator技术，把一个架构的指令转化成为另一个架构的指令，然后在CPU上执行。
+
+- QEMU还可以模拟很多硬件资源，比如磁盘、网络、USB等。
+
+- 为了加速对CPU的模拟，QEMU可以通过调用KVM提供的接口，使用硬件虚拟化技术，不需要通过软件模拟直接在硬件上执行大多数指令，这也就是**qemu/kvm**，现在的qemu一般都会使用该方式加速。qemu/kvm的架构如下：
+
+  ![Kvm model.png](/assets/img/in-post/2023-07-07-virt-tool/Kvm_model.png)
+
+### 2.  [Xen](https://wiki.xenproject.org/wiki/Xen_Project_Software_Overview)
+
+- Xen使用了paravirtualization技术，即guest OS需要对虚拟化进行适配，以便与虚拟化层进行通信和协作。在Xen中把虚拟机（VM）称做Domain
+
+- 整个Xen hypervisor 的架构如下：
+
+  ![Xen Arch Diagram v2.png](/assets/img/in-post/2023-07-07-virt-tool/xen_arch.png)
+
+### 3. VT-x & AMD-V
+
+- 分别由由Intel和AMD在硬件上引入的虚拟化支持。
+- CPU虚拟化上，Intel VT提供了VT-x技术
+  - 引⼊两种操作模式（为了解决敏感指令问题） ，统称为VMX操作模式，该模式与Ring0-Ring3的特权级 正交
+    - 根操作模式 (VMX Root Operation): VMM运⾏所处的模式
+    - ⾮根操作模式 (VMX Non-Root Operation): guest/VM运⾏所处的模式
+  - 引⼊VMCS (Virtual Machine Control Structure): 保存虚拟CPU需要的相关状态，如CPU在root/nonroot下的特权寄存器值，在CPU发⽣VM-Exit/VM-Entry是⾃动查询和更新VMCS
+  - 添加了⼀组新指令: 如VMLAUCH/VMRESUME发起VM-entry, VMREAD/VMWRITE⽤于配制VMCS
+
+### 4. [KVM](https://www.linux-kvm.org/page/Documents)
+
+- Kernel-based Virtual Machine，简单来说就是一个支持硬件虚拟化的内核模块, 使用`lsmod | grep kvm`可以查看相关内核模块
+
+- KVM利用VT-x, AMD-V等硬件虚拟化技术，把Linux内核直接转变为一个虚拟化层，来实现虚拟化。一般上会用，QEMU作为用户态的前端。
+
+  ```shell
+  grep -E 'svm|vmx' /proc/cpuinfo # 查看是否支持硬件虚拟化
+  sudo apt install qemu-kvm # 下载kvm包
+  ```
+
+- KVM的基本⼯作原理及架构如下图 (cited from OenHan & Adam Jollans)：
+
+  ![Kvm model.png](/assets/img/in-post/2023-07-07-virt-tool/kvm-arch.png)
+  ![Kvm model.png](/assets/img/in-post/2023-07-07-virt-tool/kvm-flow.png)
+
+1. 由虚拟化管理软件Qemu开始启动⼀个虚拟机
+
+2. 通过ioctl等系统调⽤向内核中申请指定的资源，搭建好虚拟环境，启动虚拟机内的OS，执⾏ VMLAUCH 指 令，即进⼊了guest代码执⾏过程。
+
+3. 如果 Guest OS 在⾮根模式下敏感指令引起的 trap，暂停 Guest OS 的执⾏，退出QEMU，即guest VMexit，进⾏⼀些必要的处理，然后重新进⼊客户模式，执⾏guest代码；这个时候如果是io请求，则提交给⽤ 户态下的qemu处理，qemu模拟处理后再次通过IOCTL反馈给KVM驱动。
+
+### 5. [Libvirt](https://libvirt.org/index.html)
+
+- 一个开源的虚拟化管理工具集，提供了一组API和工具，用于管理和控制不同虚拟化技术（如KVM、Xen、QEMU等）下的虚拟机。
+- 由于有各种各样的虚拟化技术的出现，libvirt提供了一个统一的接口，使用户可以以统一的方式管理和操作各种虚拟化平台上的虚拟机
+
+![img](/assets/img/in-post/2023-07-07-virt-tool/libvirt.png)
+
+- 在Linux中，libvirt进程以守护进程的方式运行，被称为`libvirtd`。它作为一个后台服务运行，并通过libvirt API提供虚拟化技术的管理基础设施。通过以下命令，安装并激活`libvirtd`
+
+  ```shell
+  sudo apt install libvirt-daemon-system
+  systemctl start libvirtd
+  systemctl enable libvirtd
+  sudo usermod -aG libvirt <username> # allow regular users to manage virtual machines
+  ```
+
+  - libvirt要做的所有操作都是通过XML文件配置的
+  - libvirt可以解析相关XML配置，按照配置对应的命令行参数启动虚拟机，如QEMU。
+
+- 客户端程序如virsh, virt-manager, virt-install以及云计算平台框架如OpenStack等可以通过调用libvirt提供的API配置和管理虚拟机。
+
+  1. Virsh
+
+     - The command line client interface of libvirt is the binary called `virsh`.
+
+  2. Virt-manager
+
+     - 管理KVM, qemu/kvm, xen, lxc等虚拟化程序的图形化界面
+     - 可以通过VNC和SPICE客户端直接访问VM的图形化界面。
+
+  3. Virt-viewer
+
+     - 是virt-manager的一部分
+
+     - UI for interacting with VMs via VNC/SPICE
+
+  4. Virt-install
+
+     - 是virt-manager的一部分
+
+     - Helper tools for creating new VM guests
+
+### 6. OpenStack
+
+- 开源云操作系统，对于一台服务器我们可以通过虚拟化技术跑不同的操作系统。如果我们有很多台服务器，如何组合编排这些硬件资源，为用户提供虚拟机，就是云操作系统需要做的事情。
+
+- OpenStack is a cloud operating system that controls large pools of compute, storage, and networking resources throughout a datacenter, all managed and provisioned through APIs with common authentication mechanisms.
+
+- Nova: a component in the openstack to manage computing resources.
+  - 在 Nova Compute 节点上运行的 nova-compute 服务调用 Hypervisor API 去管理运行在该 Hypervisor 的虚机。Nova 使用 libvirt 管理 QEMU/KVM 虚机，还使用别的 API 去管理别的虚机。
+  - Nova可以根据磁盘、网络的配置自动生成libvirt需要的XML文件，再根据该配置去调用libvirt的API
+
+
+- OpenStack conceptual architecture（看个乐吧
+
+  ![OpenStack conceptual architecture](/assets/img/in-post/2023-07-07-virt-tool/openstack.png)
+
+### 7. Cloud-init
+
+- `cloud-init` is a tool used in cloud computing environments to customize virtual machines at boot time
+  - It allows for the automatic configuration of network settings, user accounts, and other system settings that are required for the virtual machine to function properly.
+  -  `cloud-init` works by reading configuration data from a variety of sources, including user data, metadata, and vendor data.
+- A cloud backing image is an image that has been created with `cloud-init` support built-in.  Many cloud providers offer a selection of pre-configured cloud backing images for common operating systems and applications, which can be easily launched from their cloud dashboard or API
+
+## Lab--使用libvirt/qemu/kvm创建运行虚拟机
+
+1. 查看CPU是否支持虚拟化
+
+   ```shell
+   grep -E 'svm|vmx' /proc/cpuinfo
+   ```
+
+2. 
 
 
 
+>  后续如果有时间，会对kvm, libvirt, openstack, container做更加详细的介绍。
 
-https://dl.acm.org/doi/fullHtml/10.1145/3365199
+## Appendix
 
-http://cs312.osuosl.org/slides/21_virtualization.html#5
+Comparison of Xen, KVM, and QEMU.
 
-https://www.socallinuxexpo.org/sites/default/files/presentations/KVM%2C%20OpenStack%2C%20and%20the%20Open%20Cloud%20-%20SCaLE%20-%20ANJ%2021Feb15.pdf
+![SCR-20230710-mtki](/assets/img/in-post/2023-07-07-virt-tool/xen-kvm-qemu-compare.png)
 
-## Tools
+Comparison of virtualization and containerization.
 
-
-
-![img](https://linux-blog.anracom.com/wp-content/uploads/2021/02/Spice_basic_800.gif)
-
-![The libvirt & virtualization tools software development platform](http://berrange.com/wp-content/uploads/2012/01/virt-platform-2.png)
-
-
-
-https://www.berrange.com/posts/2012/01/13/the-libvirt-virtualization-tools-software-development-platform/
-
-System tools
-
-- kvm
-
-  - Verify. the kvm kernel modules are properly loaded
-
-    `lsmod | grep kvm`
-
-    `usermod --append --groups=kvm,libvirt ${USER}`
-
-- Xen
-
-- qemu
-
-- libvirt
-
-  - Hypervisor 比如 qemu-kvm 的命令行虚拟机管理工具参数众多，难于使用。
-
-  - Hypervisor 种类众多，没有统一的编程接口来管理它们，这对云环境来说非常重要。
-
-  - 没有统一的方式来方便地定义虚拟机相关的各种可管理对象。
-
-  - is a toolkit to manage [virtualization platforms](https://libvirt.org/platforms.html)
-
-  - ![img](https://upload.wikimedia.org/wikipedia/commons/thumb/d/d0/Libvirt_support.svg/300px-Libvirt_support.svg.png)
-
-  - the goal of the libvirt library is to provide a common and stable layer to manage VMs running on a hypervisor.
-
-  - In Linux, you will have noticed some of the processes are deamonized. The libvirt process is also deamonized, and it is called libvirtd.
-
-  - what exactly happens when a libvirt client such as virsh or virt-manager requests a service from `libvirtd`. 
-
-    a server side daemon and driver required to manage the virtualization capabilities of KVM hypervisor.
-
-    ```shell
-    sudo apt install libvirt-daemon-system
-    systemctl start libvirtd
-    systemctl enable libvirtd
-    ```
-
-    
-
-  - some common virtual machine management tools (e.g. virsh, virt-install, virt-manager, etc.) and cloud computing framework platforms (e.g. OpenStack, OpenNebula, Eucalyptus, etc.) are available
-
-  - https://subscription.packtpub.com/book/cloud-&-networking/9781784399054/2/ch02lvl1sec17/getting-acquainted-with-libvirt-and-its-implementation
-
-  - https://www.vyomtech.com/2013/12/17/libvirt_the_unsung_hero_of_cloud_computing.html
-
-  - https://libvirt.org/api.html
-
-  - https://www.cnblogs.com/sammyliu/p/4558638.html https://www.sobyte.net/post/2022-05/libvirt/
-
-  - https://www.youtube.com/watch?v=gI66ZlnLs0Y
-
-  - 
-
-- Openstack https://www.youtube.com/watch?v=IseEhw-Dxrc
-
-  - 开源云操作系统
-
-  - OpenStack is a cloud operating system that controls large pools of compute, storage, and networking resources throughout a datacenter, all managed and provisioned through APIs with common authentication mechanisms.
-
-  - Nova: a component in the openstack
-
-    
-
-- Cloud-init
-  - `cloud-init` is a tool used in cloud computing environments to customize virtual machines at boot time
-    - It allows for the automatic configuration of network settings, user accounts, and other system settings that are required for the virtual machine to function properly.
-    -  `cloud-init` works by reading configuration data from a variety of sources, including user data, metadata, and vendor data.
-  - A cloud backing image is an image that has been created with `cloud-init` support built-in.  Many cloud providers offer a selection of pre-configured cloud backing images for common operating systems and applications, which can be easily launched from their cloud dashboard or API.
-
-user/client tools
-
-- virsh
-  - The command line client interface of libvirt is the binary called `virsh`.
-
-- Virt-manager
-  - Virt-install
-  - Virt-viewer
-
-http://www.pixelbeat.org/docs/openstack_libvirt_images/
-
-
-
->  后续如果有时间，会对kvm, libvirt, openstack做更加详细的介绍。
+![img](/assets/img/in-post/2023-07-07-virt-tool/compare-virt-container.png)
 
 ## Reference
 
 1. [What is cloud computing](https://dev.to/inesattia/openstack-11pd)
+
+2. [Virtualization: History, KVM and Openstack](http://cs312.osuosl.org/slides/21_virtualization.html#1)
+
+3. [The Ideal Versus the Real: Revisiting the History of Virtual Machines and Containers](https://dl.acm.org/doi/fullHtml/10.1145/3365199)
+
+4. [Kernel Summit 2006: Paravirtualization and containers](https://lwn.net/Articles/191923/)
+
+5. [KVM基本工作原理](https://github.com/yifengyou/learn-kvm/blob/master/docs/KVM%E5%86%85%E6%A0%B8%E6%A8%A1%E5%9D%97%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/KVM%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90-%E5%9F%BA%E6%9C%AC%E5%B7%A5%E4%BD%9C%E5%8E%9F%E7%90%86.md)
+
+6. [Linux Hypervisor Setup (libvirt/qemu/kvm)](https://octetz.com/docs/2020/2020-05-06-linux-hypervisor-setup)
+
+7. [Libvirt - The Unsung Hero of Cloud Computing](https://www.vyomtech.com/2013/12/17/libvirt_the_unsung_hero_of_cloud_computing.html)
+8. [Libvirt for KVM/QEMU](https://www.cnblogs.com/sammyliu/p/4558638.html)
+9. [The libvirt & virtualization tools software development platform](https://www.berrange.com/posts/2012/01/13/the-libvirt-virtualization-tools-software-development-platform/)
+10. [The life of an OpenStack libvirt image](http://www.pixelbeat.org/docs/openstack_libvirt_images/)
+11. [Virtualization using KVM + QEMU + libvirt](https://www.dwarmstrong.org/kvm-qemu-libvirt/)
+
+## Videos
+
+1. [Under the Hood with Nova, Libvirt, and KVM](https://www.youtube.com/watch?v=gI66ZlnLs0Y)
+2. [Linux Hypervisor Setup (libvirt/qemu/kvm)](https://www.youtube.com/watch?v=HfNKpT2jo7U&t=30s)
+3. [OpenStack-The BEST Way to Build Your Own Private Cloud](https://www.youtube.com/watch?v=IseEhw-Dxrc)

@@ -110,3 +110,9 @@ https://www.youtube.com/watch?v=6n-ANRWqll8
 https://www.cnblogs.com/sammyliu/p/4543597.html
 
 https://www.youtube.com/watch?v=mAZNlyXVoT4
+
+https://developers.redhat.com/blog/2015/03/24/live-migrating-qemu-kvm-virtual-machines#vmstate_example__before
+
+https://www.cnblogs.com/popsuper1982/p/3815398.html
+
+https://www.twblogs.net/a/5b7d57e92b71770a43deb6c5
