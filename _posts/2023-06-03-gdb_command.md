@@ -236,6 +236,23 @@ make
 3. 在GDB中设置断点如`b main`，运行QEMU程序`r`
 4. 在GDB中设置`handle SIGUSR1 noprint nostop`忽略user signal
 
+## 使用GDB调试Rust
+
+在cargo.toml中加入以下profile，将符号表编入elf内
+
+```
+# The development profile, used for `cargo build`
+[profile.dev]
+opt-level = 0  # Controls the --opt-level the compiler builds with
+debug = true   # Controls whether the compiler passes `-g`
+# The release profile, used for `cargo build --release`
+[profile.release]
+opt-level = 3
+debug = false
+```
+
+或是使用`rustc -g`去编译rs文件
+
 ## GDB常见报错
 
 1. Cannot access memory at address xxx
