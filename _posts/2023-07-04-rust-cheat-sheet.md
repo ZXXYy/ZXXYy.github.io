@@ -133,7 +133,9 @@ impl<T, E: ::std::fmt::Debug> Result<T, E> {
 >
 > 2. [Borrow and AsRef](https://web.mit.edu/rust-lang_v1.25/arch/amd64_ubuntu1404/share/doc/rust/html/book/first-edition/borrow-and-asref.html#borrow-and-asref)
 
-### 5. `&str` vs. `String`, `&[]` vs. `Vec`, `Path` vs. `PathBuf`
+### 5. `&str` vs. `String`, `&[]` vs. `Vec`
+
+请查看[Rust裸指针,引用,slice,box,vec,string的内存布局及转换](https://zxxyy.github.io/posts/rust-type-mem-layout/)这篇博客。
 
 ### 6. as vs. from/Into
 
@@ -322,11 +324,11 @@ Mutex\<T>
 
 ### 11. clone vs. copy
 
+### 12. `Path` vs. `PathBuf`
+
 ### 10. dyn
 
 `dyn` is a prefix of a [trait object](https://doc.rust-lang.org/book/ch17-02-trait-objects.html)’s type. The `dyn` keyword is used to highlight that calls to methods on the associated `Trait` are [dynamically dispatched](https://en.wikipedia.org/wiki/Dynamic_dispatch). To use the trait this way, it must be ‘object safe’. 相当于动态绑定
-
-### 12. Box as_ref(), into_raw()
 
 
 

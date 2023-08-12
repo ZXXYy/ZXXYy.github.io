@@ -18,6 +18,14 @@ post: true
 
 
 
+## Shortcuts of vscode on Macos
+
+| Shortcuts          | Function             |
+| ------------------ | -------------------- |
+| `ctrl`+`-`         | 后退，返回上一处光标 |
+| `ctrl`+`shift`+`-` | 前进，移到下一处光标 |
+|                    |                      |
+
 # Useful Websites
 
 1. [Latex Math formula OCR](https://simpletex.cn/ai/latex_ocr)
