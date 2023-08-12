@@ -11,13 +11,11 @@ order: 7
 Hi, this is Xiaoye Zheng. I’m a graduate student at Zhejiang University majored in Cybersecurity.
 
 I am currently interested in Rust & System Security &  AI for Security.
-
+<!-- You can reach my [CV]({{ site.url }}{% link /assets/xiaoyez_CV.pdf %}) here.  -->
 I’m documenting my learning notes in this blog.
 
 ## Internship
 
 ## Publication
 
-
-You can reach my [CV]({{ site.url }}{% link /assets/xiaoyez_CV.pdf %}) here. 
-I am looking for internship. If you are interested, please contact me.
+I am looking for internship. If you are interested, please contact me with xiaoyez@zju.edu.cn
