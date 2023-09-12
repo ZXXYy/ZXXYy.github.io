@@ -23,7 +23,7 @@ VT-x中的CPU虚拟化主要可以分为三个方面：
 
   QEMU是运行在根模式下的用户态，为用户提供虚拟化接口。QEMU通过调用KVM提供的API，即`ioctl`进入到运行在根模式、内核态下的KVM。KVM通过执行虚拟化相关的特殊指令，将CPU切换到非根模式，运行虚拟机。
 
-  ![kvm_model](/assets/img/in-post/2023-09-11-cpu-virt/kvm_model.png)
+  ![kvm_model](/assets/img/in-post/2023-09-11-cpu-virt/Kvm_model.png)
 
 - 引入了VMCS（Virtual-Machine Control Structure），其实就是一块不超过4KB的内存块，用于保存虚拟CPU需要的相关状态。比如CPU在根模式和非根模式下的特权寄存器值，相当于根模式和非根模式的上下文。每个VMCS对应一个虚拟CPU。具体来说，VMCS包括以下五大类别：
 
