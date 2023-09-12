@@ -11,11 +11,12 @@ order: 7
 Hi, this is Xiaoye Zheng. I’m a graduate student at Zhejiang University majored in Cybersecurity.
 
 I am currently interested in Rust & System Security &  AI for Security.
-<!-- You can reach my [CV]({{ site.url }}{% link /assets/xiaoyez_CV.pdf %}) here.  -->
 I’m documenting my learning notes in this blog.
 
 ## Internship
 
+I am looking for internship. If you are interested, please contact me with xiaoyez@zju.edu.cn
+
 ## Publication
 
-I am looking for internship. If you are interested, please contact me with xiaoyez@zju.edu.cn
+[1] Xiaoye Zheng, Zhiyuan Wan, Yun Zhang, Rui Chang, and David Lo. 2023. A Closer Look at the Security Risks in the Rust Ecosystem.
