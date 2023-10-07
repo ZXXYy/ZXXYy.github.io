@@ -306,13 +306,40 @@ Also, you use `Rc::weak_count(&item)` to see the weak count.
 
 ### 10. 智能指针--Cell, RefCell, Ref, RefMutW
 
-Cell\<T>
+通过`Cell<T>`以及`RefCell<T>`可以在拥有不可变引用的同时修改目标数据--即对一个不可变的值进行可变借用，也称为内部可变性（内部通过unsafe实现，不安全代码都被封装到了安全的 API ）。
 
-RefCell\<T>
+-  `Cell<T>` 适用于 `T` 实现 `Copy` 特征的值类型，比如&str, u8等
+- `RefCell`用于引用，实现编译期可变、不可变引用共存
 
-Rust 提供了 `Cell` 和 `RefCell` 用于内部可变性
+```rust
+// Cell 的使用
+let c = Cell::new(5);
+let five = c.get();
+c.set(10);
+```
 
-内部可变性的实现是因为 Rust 使用了 `unsafe` 来做到这一点，但是对于使用者来说，这些都是透明的，因为这些不安全代码都被封装到了安全的 API 中
+在 Rust 中，一个常见的组合就是 `Rc` 和 `RefCell` 在一起使用，前者可以实现一个数据拥有多个所有者，后者可以实现数据的可变性，从而实现多个所有者共享同一份数据。
+
+```rust
+use std::cell::RefCell;
+use std::rc::Rc;
+fn main() {
+    let s = Rc::new(RefCell::new("我很善变，还拥有多个主人".to_string()));
+
+    let s1 = s.clone();
+    let s2 = s.clone();
+    // let mut s2 = s.borrow_mut();
+    s2.borrow_mut().push_str(", oh yeah!");
+
+    println!("{:?}\n{:?}\n{:?}", s, s1, s2);
+  // Output:
+  //RefCell { value: "我很善变，还拥有多个主人, oh yeah!" }
+  //RefCell { value: "我很善变，还拥有多个主人, oh yeah!" }
+  //RefCell { value: "我很善变，还拥有多个主人, oh yeah!" }
+}
+```
+
+
 
 Ref\<T>
 
