@@ -111,6 +111,6 @@ post: true
 
 ## 一些好的blogs
 
-https://medium.com/codex/journey-to-mit-6-824-lab-2a-raft-leader-election-974087a55740
+[journey-to-mit-6-824-lab-2a-raft-leader-election](https://medium.com/codex/journey-to-mit-6-824-lab-2a-raft-leader-election-974087a55740)
 
-https://blog.rayzhang.top/2022/11/09/mit-6.824-lab2-raft/index.html#%E6%89%B9%E9%87%8F%E6%B5%8B%E8%AF%95
+[mit-6.824-lab2-raft](https://blog.rayzhang.top/2022/11/09/mit-6.824-lab2-raft/index.html#%E6%89%B9%E9%87%8F%E6%B5%8B%E8%AF%95)
