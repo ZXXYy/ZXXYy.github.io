@@ -17,7 +17,8 @@ I’m documenting my learning notes in this blog.
 
 I am looking for internship. If you are interested, please contact me with xiaoyez@zju.edu.cn
 
-## Publication
+## Publications
 
 [1] Xiaoye Zheng, Zhiyuan Wan, Yun Zhang, Rui Chang, and David Lo. 2023. A Closer Look at the Security Risks in the Rust Ecosystem. ACM Transactions on Software Engineering and Methodology, 33(2), 1-30.
+
 [2] Jiang Muhui, Xiaoye Zheng, Rui Chang, Yajin Zhou, and Xiapu Luo. "EXAMINER-PRO: Testing Arm Emulators across Different Privileges." IEEE Transactions on Software Engineering (2024).
