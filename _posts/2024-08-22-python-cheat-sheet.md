@@ -10,7 +10,7 @@ post: true
 
 这篇博客主要记录一下，在实际使用Python处理数据的过程中，会涉及到的一些常用Python代码。
 
-### 1. 使用json读取/写入文件
+# 1. 使用json读取/写入文件
 主要涉及4个函数
 
 - `json.load()`
@@ -72,7 +72,7 @@ with open('data.json', 'r') as file:
         print(data)
 ```
 
-### 2.  `print` 保留小数，设置格式
+# 2.  `print` 保留小数，设置格式
 
 ```python
 value = 12.34567
@@ -87,9 +87,9 @@ print(f"{value:<{width}.{decimal}f}")  # Left-aligns within 10 characters, 2 dec
 - 居中：`{:^}`
 - 默认使用空格当占位符，` {:0<}`表示用0充当占位符
 
-### 3. 正则表达式
+# 3. 正则表达式
 
-#### 元字符
+## 元字符
 
 ```
 . ^ $ * + ? { } [ ] \ | ( )
@@ -157,7 +157,7 @@ Out[27]:
 '12'
 ```
 
-#### 使用raw string来处理反斜杠灾难
+## 使用raw string来处理反斜杠灾难
 
 - 正则表达式使用反斜杠字符 (`'\'`) 来表示特殊形式或允许使用特殊字符而不调用它们的特殊含义
 - Python 在字符串文字中也使用(`\`)表示转义
@@ -180,7 +180,7 @@ Out[27]:
 
 `"\\w+\\s+\\1"`和`r"\w+\s+\1"`是等价的，也就是说加了raw string后只需要考虑正则表达式内部的转义就可以了
 
-#### 正则表达式常用函数
+## 正则表达式常用函数
 
 | 方法 / 属性  | 目的                                                         | 返回值                                                       |
 | :----------- | :----------------------------------------------------------- | ------------------------------------------------------------ |
@@ -234,7 +234,7 @@ print(words) # [Output]: ['010', '66677788', '02166697788', '0451', '22882828']
 
 - `re.search('<regular expression>', '<target_string>')`
 
-### 4. `argparse`
+# 4. `argparse`
 
 `argparse`中有两种类型的参数，都通过`add_argument()`这个函数添加
 
@@ -397,7 +397,7 @@ args = global_parser.parse_args()
 print(args.func(*args.operands))
 ```
 
-### 5. Unit test in Python
+# 5. Unit test in Python
 
 ```python
 # project/code/my_calculations.py
@@ -436,7 +436,7 @@ python -m unittest -v project.test # 指定单元测试的文件
 
 
 
-### Reference
+# Reference
 
 1. [python正则表达式快速基础教程](https://notebook.community/liupengyuan/python_tutorial/chapter3/python%E6%AD%A3%E5%88%99%E8%A1%A8%E8%BE%BE%E5%BC%8F)
 2. [正则表达式](https://pythonhowto.readthedocs.io/zh-cn/latest/regular.html)
