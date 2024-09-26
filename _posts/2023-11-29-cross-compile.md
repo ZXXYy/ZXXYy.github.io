@@ -1,4 +1,5 @@
 ---
+layout: post
 title:      "ARM交叉编译工具链与编译选项"
 date:       2023-11-29 09:00:00
 author:     zxy

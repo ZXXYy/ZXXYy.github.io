@@ -1,4 +1,5 @@
 ---
+layout: post
 title:      "Virtualization Tools Overwiew for Layman"
 date:       2023-07-07 09:00:00
 author:     zxy

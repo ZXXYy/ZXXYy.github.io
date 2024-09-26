@@ -1,4 +1,5 @@
 ---
+layout: post
 title:      "Rust裸指针,引用,slice,box,vec,string的内存布局及转换"
 date:       2023-07-13 09:00:00
 author:     zxy

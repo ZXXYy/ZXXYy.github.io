@@ -1,4 +1,5 @@
 ---
+layout: post
 title:      "AdaBoosting Learning notes"
 date:       2023-06-05 14:00:00
 author:     zxy

@@ -1,4 +1,5 @@
 ---
+layout: post
 title:      "MIT6.824 Lab2A Raft Leader Election"
 date:       2023-12-31 09:00:00
 author:     zxy

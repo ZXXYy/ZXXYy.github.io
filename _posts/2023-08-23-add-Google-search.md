@@ -1,4 +1,5 @@
 ---
+layout: post
 title:      "让Google搜索到你的Github网页（使用Jekyll搭建）"
 date:       2023-08-23 09:00:00
 author:     zxy

@@ -1,4 +1,5 @@
 ---
+layout: post
 title:      "Support Vector Machine (SVM) Learning notes"
 date:       2023-05-07 14:00:00
 author:     zxy

@@ -1,4 +1,5 @@
 ---
+layout: post
 title:      "Rust Cheat Sheet in Practice"
 date:       2023-07-04 09:00:00
 author:     zxy

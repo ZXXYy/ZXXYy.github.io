@@ -1,12 +1,13 @@
 ---
+layout: post
 title:      "Python3 Concurrency: asyncio module/async/await"
-date:       2024-09-03 09:00:00
+date:       2024-09-03 09:00:00-0400
 author:     zxy
 math: true
-categories: ["Coding", "Python"]
-tags: ["Python"]
-post: true
+categories: Coding Python
+tags: Python
 ---
+
 
 ### 基本概念
 

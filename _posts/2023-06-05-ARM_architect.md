@@ -1,4 +1,5 @@
 ---
+layout: post
 title:      "区别ARM下的Armv9, A32, AArch64, Cortex..."
 date:       2023-06-05 14:00:00
 author:     zxy

@@ -1,4 +1,5 @@
 ---
+layout: post
 title:      "QEMU/KVM中的网络虚拟化--Part1 Overview"
 date:       2023-06-24 09:00:00
 author:     zxy

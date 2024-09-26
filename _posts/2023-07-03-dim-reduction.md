@@ -1,4 +1,5 @@
 ---
+layout: post
 title:      "线形/非线形降维方法概述"
 date:       2023-07-03 09:00:00
 author:     zxy

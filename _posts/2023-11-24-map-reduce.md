@@ -1,4 +1,5 @@
 ---
+layout: post
 title:      "MIT6.824 Lab1 Map Reduce"
 date:       2023-11-24 09:00:00
 author:     zxy
