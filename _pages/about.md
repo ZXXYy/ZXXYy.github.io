@@ -2,7 +2,7 @@
 layout: about
 title: About
 permalink: /
-subtitle: xiaoyez[at]zju.edu.cn | Office Address. | The best is the enemy of the good.
+subtitle: xiaoyez[at]zju.edu.cn | The best is the enemy of the good.
 
 profile:
   align: right
@@ -21,5 +21,5 @@ social: true # includes social icons at the bottom of the page
 I am a Ph.D. student in Computer Science at Zhejiang University. I am fortunate to be advised by Prof. [Zhiyuan Wan](https://zhiyuan-wan.github.io). My research interest is broadly in **software engineering** and **security**. I am particularly interested in Rust & AI for SE.
 
 
-Please feel free to send me an email and I am open to discussing any topics.
+Please feel free to send me an email.
 
