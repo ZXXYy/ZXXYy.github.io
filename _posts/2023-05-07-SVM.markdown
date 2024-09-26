@@ -19,7 +19,7 @@ SVM在1980年初由Vladimir Vapnik和Alexey Chervonenkis提出。
 
 最佳hyperplane的一个合理选择是以最大间隔（margin）把两个类分开的超平面，这样可以防止模型的过拟合（generalization error）。
 
-![](/assets/img/in-post/05-07-svm.png)
+![svm](/assets/img/in-post/05-07-svm.png)
 
 **Terms：**
 - Decision Boundary: 一个区分不同区域的的线/面。每一个区域都代表一个class，decision boundary可以用来预测新的数据属于哪一类。在SVM中，最优的decision boundary使得两个区域间的margin最大。
@@ -37,7 +37,7 @@ SVM在1980年初由Vladimir Vapnik和Alexey Chervonenkis提出。
 
 1. 可以知道，数据集里的所有负样本在$\omega$上的投影大小$<$所有正样本在$\omega$上的投影大小。所以对于一个新的样本，其在$\omega$上的投影大于某一个值c，我们就可以预测它为正样本，即 $\omega \cdot \mu \ge c$ ，也就是decision rule:
    $\omega \cdot \mu + b\ge 0,\ \ b=-c$
-   ![](/assets/img/in-post/05-07-SVM-math.png)
+   ![SVM-math](/assets/img/in-post/05-07-SVM-math.png)
 
 2. 由于$\omega$仅仅垂直于decision boundary，其长度并不确定。求解出一个特定的$\omega$和$b$需要有更多的约束。因此，我们增加约束，其中$x_+$代表任意的正样本，$x_-$代表任意的负样本：
 
@@ -55,7 +55,7 @@ SVM在1980年初由Vladimir Vapnik和Alexey Chervonenkis提出。
    $y_i(\omega \cdot x_i + b)\ge 1\Rightarrow y_i(\omega \cdot x_i + b)-1 \ge 0$
    对于在gutter（negative/positive hyperplane）上的点，
    $y_i(\omega \cdot x_i + b)-1 = 0$
-   ![](/assets/img/in-post/05-07-SVM-math-2.png)
+   ![SVM-math](/assets/img/in-post/05-07-SVM-math-2.png)
 
 5. SVM的最终目标是要得到最大的margin，该长度可以表示为
    $width=\frac{(x_+-x_-)\cdot \omega}{\Vert \omega\Vert}$
@@ -98,7 +98,7 @@ SVM在1980年初由Vladimir Vapnik和Alexey Chervonenkis提出。
 
 **Motivation**: 对于如下问题，SVM不能够找到一个最优的hyperplane来区分两种样本，因此需要引入soft margin，来允许一些错误的发生。当预测错误时，需要得到一些penalty/errors。
 
-![](/assets/img/in-post/05-07-soft.png)
+![soft](/assets/img/in-post/05-07-soft.png)
 
 因此，soft margin SVM的问题可以被定义为：
 
@@ -124,7 +124,7 @@ $MIN_{\omega,b} (C_i\sum max[0, 1-y_i(\omega \cdot x_i + b)] \ +\frac{1}{2} \Ver
 
 **Motivation**: 对于如下问题，SVM不能够找到一个最优的hyperplane来区分两种样本，但是在更高维度上，这两类样本是可以被区分的，因此需要引入kernel function $\Phi$，来把数据映射到更高的纬度上，从而使用SVM来对模型进行分类。
 
-![](/assets/img/in-post/05-07-non-linear.png)
+![non-linear](/assets/img/in-post/05-07-non-linear.png)
 
 常用的kernel function有：
 

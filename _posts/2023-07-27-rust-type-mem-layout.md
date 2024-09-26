@@ -61,7 +61,7 @@ println!("The value of pointed memory: {:?}", unsafe{*p}); // 5
 
 如果把val的类型改成u32，也就是4个字节大小，在64位机中可能会发生一些有意思的事情，和内存对齐相关，可以动手去试试，弄明白为什么。
 
-![](/assets/img/in-post/2023-07-27-pointer/raw_pointer.png)
+![raw_pointer](/assets/img/in-post/2023-07-27-pointer/raw_pointer.png)
 
 ### 引用内存分布
 
@@ -81,7 +81,7 @@ println!("The value of referenced memory: {}", r);  // 5
 
 上面的代码对应的内存如下，可以看出引用本质上也就是一个指针，大小为8个字节。但是引用是安全的，比如在上述代码中解引用`*r`不需要在unsafe块内完成，也可以直接通过引用变量`r`来访问引用元素的值（也就是C++中的引用/别名alias）。在大多数情况下，引用可以直接当做原来的元素去使用。在Rust中引用又是借用机制(borrow)的组成，即引用变量并不会转移内存所有权。
 
-![](/assets/img/in-post/2023-07-27-pointer/reference.png)
+![reference](/assets/img/in-post/2023-07-27-pointer/reference.png)
 
 换句话说，引用（`&T`）其实就是**附加条件的指针**:
 
@@ -179,7 +179,7 @@ println!("The value of box pointed memory: {:?}", boxed);  // 5
 println!("The value of box pointed memory: {:?}", *boxed); // 5
 ```
 
-![](/assets/img/in-post/2023-07-27-pointer/box.png)
+![box](/assets/img/in-post/2023-07-27-pointer/box.png)
 
 ```rust
 let arr = [0;5];
@@ -193,11 +193,11 @@ let boxed = Box::new(vec);	// ownership of vec is moved to boxed
 println!("The size of box: {}", std::mem::size_of_val(&boxed));  // 8
 ```
 
-![](/assets/img/in-post/2023-07-27-pointer/box2.png)
+![box](/assets/img/in-post/2023-07-27-pointer/box2.png)
 
 ## 指针相关类型的相互转换
 
-![](/assets/img/in-post/2023-07-27-pointer/cast.png)
+![cast](/assets/img/in-post/2023-07-27-pointer/cast.png)
 
 其实，有了上面的内存layout理解后，这些API就变得很容易理解了。上面的图当做一个总结，需要注意的是把裸指针转化为其他类型的操作都是`unsafe`的。
 

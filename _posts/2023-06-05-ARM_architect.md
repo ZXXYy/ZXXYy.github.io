@@ -81,11 +81,11 @@ ARM从2004年以后对处理器架构的命名做了重大修改。也就是从A
 
 - Cortex/Neoverse系列，它们都是 Arm设计的Arm微架构，wiki上整理了一个最近的[ARM指令集架构-微架构-产品](https://en.wikipedia.org/wiki/Template:Application_ARM-based_chips)对应的表格
 
-  ![](/assets/img/in-post/2023-06-06-ARM_chips.png)
+  ![ARM_chips](/assets/img/in-post/2023-06-06-ARM_chips.png)
 
 - [ARM指令架构集跟处理器架构家族的关系](https://en.wikipedia.org/wiki/ARM_architecture_family#Cores)
 
-  ![](/assets/img/in-post/2023-06-06-ARM_arch_core.png)
+  ![ARM_arch_core](/assets/img/in-post/2023-06-06-ARM_arch_core.png)
 
 ​	
 
