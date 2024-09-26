@@ -28,7 +28,7 @@ Arm生态下的术语(terms)五花八门，时常更新...这直接导致刚刚�
 使用一种是ARMv来表示的都是指令集架构，v后的数字代表不同的版本。
 
 - ARMv9：目前(2023)最新的Arm指令集架构，新增了可扩展SIMD vector (SVE2)和矩阵操作 (SME/SME2)等。
-- [ARMv8](https://en.wikichip.org/wiki/arm/armv8): 2011年发布，引入了新的64位操作，通过AArch64 execution state来执行64位操作，AArch32 execution state来兼容32位操作（后面会介绍）。
+- ARMv8: 2011年发布，引入了新的64位操作，通过AArch64 execution state来执行64位操作，AArch32 execution state来兼容32位操作（后面会介绍）。
   - ARMv8.1, ARMv8.2, ARMv8.3... 小版本修改
 - ARMv7: 2004年发布，同年也引入了profiles的概念（后面会介绍）。该指令集架构采用了Thumb-2技术（后面会介绍），支持Neon技术扩展。
 - ...

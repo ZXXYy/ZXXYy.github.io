@@ -258,13 +258,11 @@ Comparison of virtualization and containerization.
 
 5. [KVM基本工作原理](https://github.com/yifengyou/learn-kvm/blob/master/docs/KVM%E5%86%85%E6%A0%B8%E6%A8%A1%E5%9D%97%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/KVM%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90-%E5%9F%BA%E6%9C%AC%E5%B7%A5%E4%BD%9C%E5%8E%9F%E7%90%86.md)
 
-6. [Linux Hypervisor Setup (libvirt/qemu/kvm)](https://octetz.com/docs/2020/2020-05-06-linux-hypervisor-setup)
-
-7. [Libvirt - The Unsung Hero of Cloud Computing](https://www.vyomtech.com/2013/12/17/libvirt_the_unsung_hero_of_cloud_computing.html)
-8. [Libvirt for KVM/QEMU](https://www.cnblogs.com/sammyliu/p/4558638.html)
-9. [The libvirt & virtualization tools software development platform](https://www.berrange.com/posts/2012/01/13/the-libvirt-virtualization-tools-software-development-platform/)
-10. [The life of an OpenStack libvirt image](http://www.pixelbeat.org/docs/openstack_libvirt_images/)
-11. [Virtualization using KVM + QEMU + libvirt](https://www.dwarmstrong.org/kvm-qemu-libvirt/)
+6. [Libvirt - The Unsung Hero of Cloud Computing](https://www.vyomtech.com/2013/12/17/libvirt_the_unsung_hero_of_cloud_computing.html)
+7. [Libvirt for KVM/QEMU](https://www.cnblogs.com/sammyliu/p/4558638.html)
+8. [The libvirt & virtualization tools software development platform](https://www.berrange.com/posts/2012/01/13/the-libvirt-virtualization-tools-software-development-platform/)
+9. [The life of an OpenStack libvirt image](http://www.pixelbeat.org/docs/openstack_libvirt_images/)
+10. [Virtualization using KVM + QEMU + libvirt](https://www.dwarmstrong.org/kvm-qemu-libvirt/)
 
 ## Videos
 
