@@ -59,6 +59,8 @@ on:
 
 permissions:
   contents: write
+  pages: write      # 允许部署到 Pages
+  id-token: write   # 允许验证身份
 
 jobs:
   deploy:
