@@ -6,6 +6,7 @@ author:     zxy
 math: true
 categories: Coding Python
 tags: Python
+post: true
 ---
 
 

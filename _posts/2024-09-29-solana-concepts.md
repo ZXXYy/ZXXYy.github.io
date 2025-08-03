@@ -6,6 +6,7 @@ author:     zxy
 math: true
 categories: Solana Rust
 tags: Blockchain
+post: true
 ---
 > 这篇blog主要整理了Solana中各种概念间的关系。在阅读前最好先阅读Solana文档。
 

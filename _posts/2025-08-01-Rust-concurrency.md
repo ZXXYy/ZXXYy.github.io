@@ -1,11 +1,12 @@
 ---
 layout: post
-title:      "Rust Concurrency "
+title:      "Rust Concurrency Programming Cheatsheet"
 date:       2025-08-01 09:00:00-0400
 author:     zxy
 math: true
 categories: ["Coding", "Rust"]
 tags: ["Rust"]
+post: true
 ---
 > 这篇blog主要整理了Rust在多线程编程中会用到的相关概念。
 
