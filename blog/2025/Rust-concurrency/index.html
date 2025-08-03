@@ -1,0 +1,688 @@
+<!DOCTYPE html> <html lang="en"> <head> <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"> <meta charset="utf-8"> <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"> <meta http-equiv="X-UA-Compatible" content="IE=edge"> <title> Rust Concurrency | Xiaoye Zheng </title> <meta name="author" content="Xiaoye Zheng"> <meta name="description" content="Xiaoye Zheng' blog "> <link rel="stylesheet" href="/assets/css/bootstrap.min.css?a4b3f509e79c54a512b890d73235ef04"> <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/mdbootstrap@4.20.0/css/mdb.min.css" integrity="sha256-jpjYvU3G3N6nrrBwXJoVEYI/0zw8htfFnhT9ljN3JJw=" crossorigin="anonymous"> <link defer rel="stylesheet" href="/assets/css/academicons.min.css?f0b7046b84e425c55f3463ac249818f5"> <link defer rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700|Roboto+Slab:100,300,400,500,700|Material+Icons&amp;display=swap"> <link defer rel="stylesheet" href="/assets/css/jekyll-pygments-themes-github.css?591dab5a4e56573bf4ef7fd332894c99" media="" id="highlight_theme_light"> <link rel="shortcut icon" href="data:image/svg+xml,&lt;svg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%20100%20100%22&gt;&lt;text%20y=%22.9em%22%20font-size=%2290%22&gt;%E2%9A%9B%EF%B8%8F&lt;/text&gt;&lt;/svg&gt;"> <link rel="stylesheet" href="/assets/css/main.css?d41d8cd98f00b204e9800998ecf8427e"> <link rel="canonical" href="https://zxxyy.github.io/blog/2025/Rust-concurrency/"> <script src="/assets/js/theme.js?9a0c749ec5240d9cda97bc72359a72c0"></script> <link defer rel="stylesheet" href="/assets/css/jekyll-pygments-themes-native.css?5847e5ed4a4568527aa6cfab446049ca" media="none" id="highlight_theme_dark"> <script>initTheme();</script> </head> <body class="fixed-top-nav "> <header> <nav id="navbar" class="navbar navbar-light navbar-expand-sm fixed-top" role="navigation"> <div class="container"> <a class="navbar-brand title font-weight-lighter" href="/"> <span class="font-weight-bold">Xiaoye</span> Zheng </a> <button class="navbar-toggler collapsed ml-auto" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation"> <span class="sr-only">Toggle navigation</span> <span class="icon-bar top-bar"></span> <span class="icon-bar middle-bar"></span> <span class="icon-bar bottom-bar"></span> </button> <div class="collapse navbar-collapse text-right" id="navbarNav"> <ul class="navbar-nav ml-auto flex-nowrap"> <li class="nav-item "> <a class="nav-link" href="/">About </a> </li> <li class="nav-item active"> <a class="nav-link" href="/blog/">Blog </a> </li> <li class="nav-item "> <a class="nav-link" href="/publications/">Publications </a> </li> <li class="nav-item "> <a class="nav-link" href="/repositories/">Repositories </a> </li> <li class="nav-item dropdown "> <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Misc </a> <div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarDropdown"> <a class="dropdown-item " href="/books/">Books</a> <div class="dropdown-divider"></div> <a class="dropdown-item " href="/links/">Links</a> </div> </li> <li class="nav-item"> <button id="search-toggle" title="Search" onclick="openSearchModal()"> <span class="nav-link">ctrl k <i class="ti ti-search"></i></span> </button> </li> <li class="toggle-container"> <button id="light-toggle" title="Change theme"> <i class="ti ti-sun-moon" id="light-toggle-system"></i> <i class="ti ti-moon-filled" id="light-toggle-dark"></i> <i class="ti ti-sun-filled" id="light-toggle-light"></i> </button> </li> </ul> </div> </div> </nav> <progress id="progress" value="0"> <div class="progress-container"> <span class="progress-bar"></span> </div> </progress> </header> <div class="container mt-5" role="main"> <div class="post"> <header class="post-header"> <h1 class="post-title">Rust Concurrency </h1> <p class="post-meta"> Created in August 01, 2025 by zxy </p> <p class="post-tags"> <a href="/blog/2025"> <i class="fa-solid fa-calendar fa-sm"></i> 2025 </a>   ·   <a href="/blog/tag/rust"> <i class="fa-solid fa-hashtag fa-sm"></i> Rust</a>   ·   <a href="/blog/category/coding"> <i class="fa-solid fa-tag fa-sm"></i> Coding</a>   <a href="/blog/category/rust"> <i class="fa-solid fa-tag fa-sm"></i> Rust</a> </p> </header> <article class="post-content"> <div id="markdown-content"> <blockquote> <p>这篇blog主要整理了Rust在多线程编程中会用到的相关概念。</p> </blockquote> <h2 id="1-引言">1. 引言</h2> <p>随着多核处理器的普及，并发编程已成为现代软件开发的重要组成部分。Rust凭借其内存安全和零成本抽象的特性，为并发编程提供了强大而安全的工具。本文将全面介绍Rust中的并发编程概念，包括线程、进程、共享状态、锁机制、原子操作和通信通道(Channel)等。</p> <h2 id="2-线程进程与协程">2. 线程、进程与协程</h2> <h3 id="21-线程进程与异步任务的对比">2.1 线程、进程与异步任务的对比</h3> <table> <thead> <tr> <th>特性</th> <th>进程</th> <th>线程</th> <th>异步任务</th> </tr> </thead> <tbody> <tr> <td>资源隔离</td> <td>完全隔离</td> <td>共享内存</td> <td>共享内存</td> </tr> <tr> <td>创建开销</td> <td>最大</td> <td>中等</td> <td>最小</td> </tr> <tr> <td>切换开销</td> <td>最大</td> <td>中等</td> <td>最小</td> </tr> <tr> <td>并行能力</td> <td>真并行</td> <td>真并行</td> <td>并发(非并行)</td> </tr> <tr> <td>适用场景</td> <td>需要隔离、安全性</td> <td>CPU密集型</td> <td>I/O密集型</td> </tr> <tr> <td>通信方式</td> <td>IPC</td> <td>共享内存、锁</td> <td>共享内存、通道</td> </tr> </tbody> </table> <p><strong>关键差异：</strong></p> <ul> <li> <p><strong>资源消耗</strong>：thread::spawn创建的线程消耗更多内存和CPU资源</p> </li> <li> <p><strong>并发数量</strong>：tokio::spawn可以轻松创建成千上万个任务，而OS线程数量有限</p> </li> <li> <p><strong>调度</strong>：tokio任务由Rust运行时调度，thread由操作系统调度</p> </li> <li> <p><strong>阻塞行为</strong>：在tokio::spawn中使用阻塞操作会影响整个运行时性能</p> </li> </ul> <h3 id="22-如何选择">2.2 如何选择？</h3> <ul> <li> <p><strong>异步任务tokio::spawn</strong>：I/O密集型，需要高并发，共享状态，任务主要是等待外部资源</p> <ul> <li> <p>创建轻量级的异步任务（green thread/协程），任务在tokio运行时的线程池上执行（默认线程数等于CPU核心数）</p> </li> <li> <p>任务切换在用户空间进行，开销很小</p> </li> <li> <p>只能运行async函数，<strong>不应包含阻塞操作</strong></p> </li> </ul> </li> <li> <p><strong>线程thread::spawn</strong>：CPU密集型，需要并行计算，可接受共享内存的复杂性</p> <ul> <li> <p>创建真正的操作系统线程，每个线程都有独立的栈空间（通常2MB）</p> </li> <li> <p>线程切换由操作系统内核调度，开销较大</p> </li> <li> <p>可以运行任何代码，包括阻塞操作</p> </li> </ul> </li> <li> <p><strong>进程</strong>：需要隔离、调用外部程序、或者要求极高的稳定性</p> </li> </ul> <h3 id="23-线程异步任务和进程的代码示例">2.3 线程、异步任务和进程的代码示例</h3> <p>下面展示如何创建线程、异步任务和进程的代码示例：</p> <h4 id="使用threadspawn创建线程"><strong>使用thread::spawn创建线程</strong></h4> <div class="language-rust highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">use</span> <span class="nn">std</span><span class="p">::</span><span class="n">thread</span><span class="p">;</span>
+<span class="k">use</span> <span class="nn">std</span><span class="p">::</span><span class="nn">time</span><span class="p">::</span><span class="n">Duration</span><span class="p">;</span>
+
+<span class="k">fn</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+	<span class="c1">// 创建多个线程</span>
+    <span class="k">let</span> <span class="k">mut</span> <span class="n">handles</span> <span class="o">=</span> <span class="nd">vec!</span><span class="p">[];</span>
+	<span class="k">for</span> <span class="n">id</span> <span class="k">in</span> <span class="mi">0</span><span class="o">..</span><span class="mi">5</span> <span class="p">{</span>
+    	<span class="k">let</span> <span class="n">handle</span> <span class="o">=</span> <span class="nn">thread</span><span class="p">::</span><span class="nf">spawn</span><span class="p">(||</span> <span class="p">{</span>
+        	<span class="nd">println!</span><span class="p">(</span><span class="s">"线程开始执行"</span><span class="p">);</span>
+        	<span class="c1">// 模拟耗时操作</span>
+        	<span class="nn">thread</span><span class="p">::</span><span class="nf">sleep</span><span class="p">(</span><span class="nn">Duration</span><span class="p">::</span><span class="nf">from_millis</span><span class="p">(</span><span class="mi">500</span><span class="p">));</span>
+        	<span class="nd">println!</span><span class="p">(</span><span class="s">"线程执行完毕"</span><span class="p">);</span>
+        	<span class="c1">// 返回值会被join()获取</span>
+        	<span class="mi">42</span><span class="o">+</span><span class="n">i</span>
+    	<span class="p">});</span>
+		<span class="n">handles</span><span class="nf">.push</span><span class="p">(</span><span class="n">handle</span><span class="p">);</span>
+	<span class="p">}</span>
+    
+    <span class="c1">// 主线程继续执行</span>
+    <span class="nd">println!</span><span class="p">(</span><span class="s">"主线程继续执行其他工作"</span><span class="p">);</span>
+    <span class="c1">// 等待线程完成并获取返回值</span>
+	<span class="k">for</span> <span class="n">handle</span> <span class="k">in</span> <span class="n">handles</span> <span class="p">{</span>
+        <span class="k">let</span> <span class="n">result</span> <span class="o">=</span> <span class="n">handle</span><span class="nf">.join</span><span class="p">()</span><span class="nf">.unwrap</span><span class="p">();</span>
+    	<span class="nd">println!</span><span class="p">(</span><span class="s">"线程返回值: {}"</span><span class="p">,</span> <span class="n">result</span><span class="p">);</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div> <h4 id="使用异步任务tokiospawn">使用异步任务tokio::spawn</h4> <div class="language-rust highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">use</span> <span class="nn">tokio</span><span class="p">::</span><span class="nn">time</span><span class="p">::{</span><span class="n">sleep</span><span class="p">,</span> <span class="n">Duration</span><span class="p">};</span>
+<span class="nd">#[tokio::main]</span>
+<span class="k">async</span> <span class="k">fn</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+    <span class="c1">// 创建一个异步任务</span>
+    <span class="k">let</span> <span class="n">handle</span> <span class="o">=</span> <span class="nn">tokio</span><span class="p">::</span><span class="nf">spawn</span><span class="p">(</span><span class="k">async</span> <span class="p">{</span>
+        <span class="nd">println!</span><span class="p">(</span><span class="s">"异步任务开始执行"</span><span class="p">);</span>
+        <span class="c1">// 模拟异步操作</span>
+        <span class="nf">sleep</span><span class="p">(</span><span class="nn">Duration</span><span class="p">::</span><span class="nf">from_secs</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span><span class="k">.await</span><span class="p">;</span>
+        <span class="nd">println!</span><span class="p">(</span><span class="s">"异步任务完成"</span><span class="p">);</span>
+		<span class="c1">// 返回值会被await获取</span>
+        <span class="s">"完成"</span>
+    <span class="p">});</span>
+    <span class="c1">// 等待异步任务完成并获取返回值</span>
+    <span class="k">let</span> <span class="n">result</span> <span class="o">=</span> <span class="n">handle</span><span class="k">.await</span><span class="nf">.unwrap</span><span class="p">();</span>
+    <span class="nd">println!</span><span class="p">(</span><span class="s">"异步任务返回值: {}"</span><span class="p">,</span> <span class="n">result</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div></div> <h4 id="创建进程"><strong>创建进程</strong></h4> <div class="language-rust highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">use</span> <span class="nn">std</span><span class="p">::</span><span class="nn">process</span><span class="p">::</span><span class="n">Command</span><span class="p">;</span>
+<span class="k">use</span> <span class="nn">std</span><span class="p">::</span><span class="n">io</span><span class="p">;</span>
+
+<span class="k">fn</span> <span class="nf">main</span><span class="p">()</span> <span class="k">-&gt;</span> <span class="nn">io</span><span class="p">::</span><span class="nb">Result</span><span class="o">&lt;</span><span class="p">()</span><span class="o">&gt;</span> <span class="p">{</span>
+    <span class="c1">// 简单的进程创建并等待完成</span>
+    <span class="k">let</span> <span class="n">status</span> <span class="o">=</span> <span class="nn">Command</span><span class="p">::</span><span class="nf">new</span><span class="p">(</span><span class="s">"ls"</span><span class="p">)</span>
+        <span class="nf">.arg</span><span class="p">(</span><span class="s">"-l"</span><span class="p">)</span>
+        <span class="nf">.status</span><span class="p">()</span><span class="o">?</span><span class="p">;</span>
+    <span class="nd">println!</span><span class="p">(</span><span class="s">"进程退出状态: {}"</span><span class="p">,</span> <span class="n">status</span><span class="p">);</span>
+    
+    <span class="c1">// 捕获进程输出</span>
+    <span class="k">let</span> <span class="n">output</span> <span class="o">=</span> <span class="nn">Command</span><span class="p">::</span><span class="nf">new</span><span class="p">(</span><span class="s">"echo"</span><span class="p">)</span>
+        <span class="nf">.arg</span><span class="p">(</span><span class="s">"Hello from another process!"</span><span class="p">)</span>
+        <span class="nf">.output</span><span class="p">()</span><span class="o">?</span><span class="p">;</span>
+        
+    <span class="k">if</span> <span class="n">output</span><span class="py">.status</span><span class="nf">.success</span><span class="p">()</span> <span class="p">{</span>
+        <span class="k">let</span> <span class="n">stdout</span> <span class="o">=</span> <span class="nn">String</span><span class="p">::</span><span class="nf">from_utf8_lossy</span><span class="p">(</span><span class="o">&amp;</span><span class="n">output</span><span class="py">.stdout</span><span class="p">);</span>
+        <span class="nd">println!</span><span class="p">(</span><span class="s">"进程输出: {}"</span><span class="p">,</span> <span class="n">stdout</span><span class="p">);</span>
+    <span class="p">}</span>
+    
+    <span class="c1">// 创建进程但不等待完成</span>
+    <span class="k">let</span> <span class="k">mut</span> <span class="n">child</span> <span class="o">=</span> <span class="nn">Command</span><span class="p">::</span><span class="nf">new</span><span class="p">(</span><span class="s">"sleep"</span><span class="p">)</span>
+        <span class="nf">.arg</span><span class="p">(</span><span class="s">"2"</span><span class="p">)</span>
+        <span class="nf">.spawn</span><span class="p">()</span><span class="o">?</span><span class="p">;</span>
+        
+    <span class="nd">println!</span><span class="p">(</span><span class="s">"子进程已启动，PID: {}"</span><span class="p">,</span> <span class="n">child</span><span class="nf">.id</span><span class="p">());</span>
+    
+    <span class="c1">// 可以选择等待完成</span>
+    <span class="k">let</span> <span class="n">status</span> <span class="o">=</span> <span class="n">child</span><span class="nf">.wait</span><span class="p">()</span><span class="o">?</span><span class="p">;</span>
+    <span class="nd">println!</span><span class="p">(</span><span class="s">"子进程已完成，退出状态: {}"</span><span class="p">,</span> <span class="n">status</span><span class="p">);</span>
+    
+    <span class="c1">// 使用管道与进程通信</span>
+    <span class="k">let</span> <span class="k">mut</span> <span class="n">child</span> <span class="o">=</span> <span class="nn">Command</span><span class="p">::</span><span class="nf">new</span><span class="p">(</span><span class="s">"cat"</span><span class="p">)</span>
+        <span class="nf">.stdin</span><span class="p">(</span><span class="nn">std</span><span class="p">::</span><span class="nn">process</span><span class="p">::</span><span class="nn">Stdio</span><span class="p">::</span><span class="nf">piped</span><span class="p">())</span>
+        <span class="nf">.stdout</span><span class="p">(</span><span class="nn">std</span><span class="p">::</span><span class="nn">process</span><span class="p">::</span><span class="nn">Stdio</span><span class="p">::</span><span class="nf">piped</span><span class="p">())</span>
+        <span class="nf">.spawn</span><span class="p">()</span><span class="o">?</span><span class="p">;</span>
+        
+    <span class="c1">// 向进程写入数据</span>
+    <span class="k">if</span> <span class="k">let</span> <span class="nf">Some</span><span class="p">(</span><span class="k">mut</span> <span class="n">stdin</span><span class="p">)</span> <span class="o">=</span> <span class="n">child</span><span class="py">.stdin</span><span class="nf">.take</span><span class="p">()</span> <span class="p">{</span>
+        <span class="k">use</span> <span class="nn">std</span><span class="p">::</span><span class="nn">io</span><span class="p">::</span><span class="n">Write</span><span class="p">;</span>
+        <span class="n">stdin</span><span class="nf">.write_all</span><span class="p">(</span><span class="s">b"Hello from Rust!"</span><span class="p">)</span><span class="o">?</span><span class="p">;</span>
+        <span class="c1">// 关闭stdin，否则cat会一直等待输入</span>
+        <span class="nf">drop</span><span class="p">(</span><span class="n">stdin</span><span class="p">);</span>
+    <span class="p">}</span>
+    
+    <span class="c1">// 读取进程输出</span>
+    <span class="k">let</span> <span class="n">output</span> <span class="o">=</span> <span class="n">child</span><span class="nf">.wait_with_output</span><span class="p">()</span><span class="o">?</span><span class="p">;</span>
+    <span class="nd">println!</span><span class="p">(</span><span class="s">"cat输出: {}"</span><span class="p">,</span> <span class="nn">String</span><span class="p">::</span><span class="nf">from_utf8_lossy</span><span class="p">(</span><span class="o">&amp;</span><span class="n">output</span><span class="py">.stdout</span><span class="p">));</span>
+    
+    <span class="nf">Ok</span><span class="p">(())</span>
+<span class="p">}</span>
+</code></pre></div></div> <h2 id="3-共享状态和所有权">3. 共享状态和所有权</h2> <h3 id="31-arc---原子引用计数">3.1 Arc - 原子引用计数</h3> <p>在Rust中，锁（如<code class="language-plaintext highlighter-rouge">Mutex&lt;T&gt;</code>、<code class="language-plaintext highlighter-rouge">RwLock&lt;T&gt;</code>）外面套<code class="language-plaintext highlighter-rouge">Arc</code>是为了<strong>在多个线程之间共享同一个锁</strong>。Rust的所有权系统规定每个值只能有一个所有者，但多线程编程需要多个线程访问同一份数据，<code class="language-plaintext highlighter-rouge">Arc</code>（Atomically Reference Counted）提供了<strong>共享所有权</strong>。</p> <p><code class="language-plaintext highlighter-rouge">Arc</code>的工作原理：</p> <ol> <li> <p><strong>引用计数</strong>：跟踪有多少个”所有者”</p> </li> <li> <p><strong>原子操作</strong>：引用计数的增减是线程安全的</p> </li> <li> <p><strong>自动清理</strong>：当引用计数降到0时自动释放内存</p> </li> <li> <p><strong>共享访问</strong>：多个线程可以同时持有指向同一数据的Arc</p> </li> </ol> <div class="language-rust highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">use</span> <span class="nn">std</span><span class="p">::</span><span class="nn">sync</span><span class="p">::</span><span class="nb">Arc</span><span class="p">;</span>
+<span class="k">use</span> <span class="nn">std</span><span class="p">::</span><span class="n">thread</span><span class="p">;</span>
+<span class="k">fn</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+    <span class="k">let</span> <span class="n">data</span> <span class="o">=</span> <span class="nn">Arc</span><span class="p">::</span><span class="nf">new</span><span class="p">(</span><span class="nd">vec!</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">]);</span>
+    <span class="k">let</span> <span class="k">mut</span> <span class="n">handles</span> <span class="o">=</span> <span class="nd">vec!</span><span class="p">[];</span>
+    
+    <span class="k">for</span> <span class="n">i</span> <span class="k">in</span> <span class="mi">0</span><span class="o">..</span><span class="mi">3</span> <span class="p">{</span>
+        <span class="k">let</span> <span class="n">data_clone</span> <span class="o">=</span> <span class="nn">Arc</span><span class="p">::</span><span class="nf">clone</span><span class="p">(</span><span class="o">&amp;</span><span class="n">data</span><span class="p">);</span>
+        <span class="k">let</span> <span class="n">handle</span> <span class="o">=</span> <span class="nn">thread</span><span class="p">::</span><span class="nf">spawn</span><span class="p">(</span><span class="k">move</span> <span class="p">||</span> <span class="p">{</span>
+            <span class="nd">println!</span><span class="p">(</span><span class="s">"Thread {}: {:?}"</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">data_clone</span><span class="p">);</span>
+        <span class="p">});</span>
+        <span class="n">handles</span><span class="nf">.push</span><span class="p">(</span><span class="n">handle</span><span class="p">);</span>
+    <span class="p">}</span>
+    <span class="k">for</span> <span class="n">handle</span> <span class="k">in</span> <span class="n">handles</span> <span class="p">{</span>
+        <span class="n">handle</span><span class="nf">.join</span><span class="p">()</span><span class="nf">.unwrap</span><span class="p">();</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div> <h2 id="4-锁机制">4. 锁机制</h2> <p>锁是并发编程中保护共享数据的重要工具。Rust提供了多种锁机制，每种都有其特定的用途和性能特点。</p> <h3 id="41-锁类型对比">4.1 锁类型对比</h3> <table> <thead> <tr> <th>锁类型</th> <th>并发访问模式</th> <th>阻塞行为</th> <th>适用场景</th> <th>性能特点</th> <th>API复杂度</th> </tr> </thead> <tbody> <tr> <td><code class="language-plaintext highlighter-rouge">Mutex&lt;T&gt;</code></td> <td>一次只允许一个线程访问</td> <td>阻塞等待</td> <td>写操作频繁</td> <td>中等</td> <td>简单</td> </tr> <tr> <td><code class="language-plaintext highlighter-rouge">RwLock&lt;T&gt;</code></td> <td>多读单写</td> <td>阻塞等待</td> <td>读多写少</td> <td>读多时高</td> <td>中等</td> </tr> <tr> <td><code class="language-plaintext highlighter-rouge">tokio::sync::Mutex&lt;T&gt;</code></td> <td>一次只允许一个任务访问</td> <td>异步等待</td> <td>异步环境中的互斥访问</td> <td>高（不阻塞线程）</td> <td>简单</td> </tr> <tr> <td><code class="language-plaintext highlighter-rouge">tokio::sync::RwLock&lt;T&gt;</code></td> <td>多读单写</td> <td>异步等待</td> <td>异步环境中读多写少</td> <td>高（不阻塞线程）</td> <td>中等</td> </tr> <tr> <td><code class="language-plaintext highlighter-rouge">parking_lot::Mutex&lt;T&gt;</code></td> <td>一次只允许一个线程访问</td> <td>阻塞等待</td> <td>高性能要求的互斥访问</td> <td>高（比标准库快）</td> <td>简单（无需处理Result）</td> </tr> <tr> <td><code class="language-plaintext highlighter-rouge">parking_lot::RwLock&lt;T&gt;</code></td> <td>多读单写</td> <td>阻塞等待</td> <td>高性能要求的读多写少</td> <td>高（比标准库快）</td> <td>简单（无需处理Result）</td> </tr> <tr> <td><code class="language-plaintext highlighter-rouge">Semaphore</code></td> <td>限制并发数量</td> <td>阻塞/异步等待</td> <td>资源池、限流</td> <td>中等</td> <td>简单</td> </tr> <tr> <td><code class="language-plaintext highlighter-rouge">Barrier</code></td> <td>同步多个线程</td> <td>阻塞等待</td> <td>多线程同步点</td> <td>低（设计如此）</td> <td>简单</td> </tr> <tr> <td><code class="language-plaintext highlighter-rouge">Once</code></td> <td>确保代码只执行一次</td> <td>阻塞等待</td> <td>一次性初始化</td> <td>高</td> <td>非常简单</td> </tr> </tbody> </table> <h3 id="42-锁的选择指南">4.2 锁的选择指南</h3> <h4 id="基于访问模式选择">基于访问模式选择</h4> <ol> <li> <p><strong>写操作频繁场景</strong>，选择: <code class="language-plaintext highlighter-rouge">Mutex</code> 或 <code class="language-plaintext highlighter-rouge">parking_lot::Mutex</code>避免读写锁的复杂管理开销，互斥锁在频繁写入时性能更好</p> </li> <li> <p><strong>读操作远多于写操作场景</strong>，选择: <code class="language-plaintext highlighter-rouge">RwLock</code> 或 <code class="language-plaintext highlighter-rouge">parking_lot::RwLock</code> 允许多个读取者并发访问，提高并发度</p> </li> <li> <p><strong>异步环境中的锁</strong>，选择: <code class="language-plaintext highlighter-rouge">tokio::sync::Mutex</code> 或 <code class="language-plaintext highlighter-rouge">tokio::sync::RwLock</code>， 不会阻塞线程，允许异步等待锁释放</p> </li> <li> <p><strong>高性能要求场景，</strong> 选择: <code class="language-plaintext highlighter-rouge">parking_lot</code> 库中的锁，更小的内存占用，更快的锁操作，更简洁的API</p> </li> </ol> <h4 id="基于特殊需求选择">基于特殊需求选择</h4> <ol> <li> <p><strong>需要限制并发数量</strong>，选择: <code class="language-plaintext highlighter-rouge">Semaphore</code></p> <ul> <li>用途: 限制同时访问资源的线程数，实现资源池或限流</li> </ul> </li> <li> <p><strong>需要线程同步点</strong>，选择: <code class="language-plaintext highlighter-rouge">Barrier</code>，让多个线程在某个点同步等待，然后一起继续执行</p> </li> </ol> <p>3) <strong>一次性初始化需求</strong>，选择: <code class="language-plaintext highlighter-rouge">Once</code> ，确保某段代码只执行一次，常用于静态变量初始化</p> <ol> <li> <strong>避免死锁需求</strong>，选择: 尝试加锁API，如<code class="language-plaintext highlighter-rouge">try_lock()</code>或带超时的锁，避免无限等待，实现更健壮的错误处理</li> </ol> <h3 id="43-代码示例">4.3 代码示例</h3> <h4 id="mutex示例---适合写操作频繁场景">Mutex示例 - 适合写操作频繁场景</h4> <div class="language-rust highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">use</span> <span class="nn">std</span><span class="p">::</span><span class="nn">sync</span><span class="p">::{</span><span class="nb">Arc</span><span class="p">,</span> <span class="n">Mutex</span><span class="p">};</span>
+<span class="k">use</span> <span class="nn">std</span><span class="p">::</span><span class="n">thread</span><span class="p">;</span>
+
+<span class="k">fn</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+    <span class="c1">// 创建一个共享计数器</span>
+    <span class="k">let</span> <span class="n">counter</span> <span class="o">=</span> <span class="nn">Arc</span><span class="p">::</span><span class="nf">new</span><span class="p">(</span><span class="nn">Mutex</span><span class="p">::</span><span class="nf">new</span><span class="p">(</span><span class="mi">0</span><span class="p">));</span>
+    <span class="k">let</span> <span class="k">mut</span> <span class="n">handles</span> <span class="o">=</span> <span class="nd">vec!</span><span class="p">[];</span>
+    
+    <span class="c1">// 创建10个线程，每个线程递增计数器10次</span>
+    <span class="k">for</span> <span class="n">_</span> <span class="k">in</span> <span class="mi">0</span><span class="o">..</span><span class="mi">10</span> <span class="p">{</span>
+        <span class="k">let</span> <span class="n">counter</span> <span class="o">=</span> <span class="nn">Arc</span><span class="p">::</span><span class="nf">clone</span><span class="p">(</span><span class="o">&amp;</span><span class="n">counter</span><span class="p">);</span>
+        <span class="k">let</span> <span class="n">handle</span> <span class="o">=</span> <span class="nn">thread</span><span class="p">::</span><span class="nf">spawn</span><span class="p">(</span><span class="k">move</span> <span class="p">||</span> <span class="p">{</span>
+            <span class="k">for</span> <span class="n">_</span> <span class="k">in</span> <span class="mi">0</span><span class="o">..</span><span class="mi">10</span> <span class="p">{</span>
+                <span class="c1">// 获取锁</span>
+                <span class="k">let</span> <span class="k">mut</span> <span class="n">count</span> <span class="o">=</span> <span class="n">counter</span><span class="nf">.lock</span><span class="p">()</span><span class="nf">.unwrap</span><span class="p">();</span>
+                <span class="c1">// 修改共享数据</span>
+                <span class="o">*</span><span class="n">count</span> <span class="o">+=</span> <span class="mi">1</span><span class="p">;</span>
+                <span class="c1">// 锁在作用域结束时自动释放</span>
+            <span class="p">}</span>
+        <span class="p">});</span>
+        <span class="n">handles</span><span class="nf">.push</span><span class="p">(</span><span class="n">handle</span><span class="p">);</span>
+    <span class="p">}</span>
+    
+    <span class="c1">// 等待所有线程完成</span>
+    <span class="k">for</span> <span class="n">handle</span> <span class="k">in</span> <span class="n">handles</span> <span class="p">{</span>
+        <span class="n">handle</span><span class="nf">.join</span><span class="p">()</span><span class="nf">.unwrap</span><span class="p">();</span>
+    <span class="p">}</span>
+    
+    <span class="c1">// 输出最终结果</span>
+    <span class="nd">println!</span><span class="p">(</span><span class="s">"计数器最终值: {}"</span><span class="p">,</span> <span class="o">*</span><span class="n">counter</span><span class="nf">.lock</span><span class="p">()</span><span class="nf">.unwrap</span><span class="p">());</span>
+<span class="p">}</span>
+</code></pre></div></div> <h4 id="rwlock示例---适合读多写少场景">RwLock示例 - 适合读多写少场景</h4> <div class="language-rust highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">use</span> <span class="nn">std</span><span class="p">::</span><span class="nn">sync</span><span class="p">::{</span><span class="nb">Arc</span><span class="p">,</span> <span class="n">RwLock</span><span class="p">};</span>
+<span class="k">use</span> <span class="nn">std</span><span class="p">::</span><span class="n">thread</span><span class="p">;</span>
+<span class="k">use</span> <span class="nn">std</span><span class="p">::</span><span class="nn">time</span><span class="p">::</span><span class="n">Duration</span><span class="p">;</span>
+
+<span class="k">struct</span> <span class="n">Database</span> <span class="p">{</span>
+    <span class="n">data</span><span class="p">:</span> <span class="nb">Vec</span><span class="p">,</span>
+<span class="p">}</span>
+
+<span class="k">fn</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+    <span class="c1">// 创建共享数据库</span>
+    <span class="k">let</span> <span class="n">db</span> <span class="o">=</span> <span class="nn">Arc</span><span class="p">::</span><span class="nf">new</span><span class="p">(</span><span class="nn">RwLock</span><span class="p">::</span><span class="nf">new</span><span class="p">(</span><span class="n">Database</span> <span class="p">{</span>
+        <span class="n">data</span><span class="p">:</span> <span class="nd">vec!</span><span class="p">[</span><span class="s">"初始数据"</span><span class="nf">.to_string</span><span class="p">()],</span>
+    <span class="p">}));</span>
+    
+    <span class="c1">// 创建一个写入线程</span>
+    <span class="k">let</span> <span class="n">db_writer</span> <span class="o">=</span> <span class="nn">Arc</span><span class="p">::</span><span class="nf">clone</span><span class="p">(</span><span class="o">&amp;</span><span class="n">db</span><span class="p">);</span>
+    <span class="k">let</span> <span class="n">writer</span> <span class="o">=</span> <span class="nn">thread</span><span class="p">::</span><span class="nf">spawn</span><span class="p">(</span><span class="k">move</span> <span class="p">||</span> <span class="p">{</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="k">in</span> <span class="mi">0</span><span class="o">..</span><span class="mi">5</span> <span class="p">{</span>
+            <span class="c1">// 获取写锁</span>
+            <span class="k">let</span> <span class="k">mut</span> <span class="n">database</span> <span class="o">=</span> <span class="n">db_writer</span><span class="nf">.write</span><span class="p">()</span><span class="nf">.unwrap</span><span class="p">();</span>
+            <span class="c1">// 修改数据</span>
+            <span class="n">database</span><span class="py">.data</span><span class="nf">.push</span><span class="p">(</span><span class="nd">format!</span><span class="p">(</span><span class="s">"新数据 {}"</span><span class="p">,</span> <span class="n">i</span><span class="p">));</span>
+            <span class="nd">println!</span><span class="p">(</span><span class="s">"写入: 新数据 {}"</span><span class="p">,</span> <span class="n">i</span><span class="p">);</span>
+            <span class="c1">// 写锁在作用域结束时释放</span>
+            <span class="nf">drop</span><span class="p">(</span><span class="n">database</span><span class="p">);</span> <span class="c1">// 显式释放锁，让读取者有机会获取锁</span>
+            <span class="nn">thread</span><span class="p">::</span><span class="nf">sleep</span><span class="p">(</span><span class="nn">Duration</span><span class="p">::</span><span class="nf">from_millis</span><span class="p">(</span><span class="mi">100</span><span class="p">));</span>
+        <span class="p">}</span>
+    <span class="p">});</span>
+    
+    <span class="c1">// 创建多个读取线程</span>
+    <span class="k">let</span> <span class="k">mut</span> <span class="n">readers</span> <span class="o">=</span> <span class="nd">vec!</span><span class="p">[];</span>
+    <span class="k">for</span> <span class="n">id</span> <span class="k">in</span> <span class="mi">0</span><span class="o">..</span><span class="mi">3</span> <span class="p">{</span>
+        <span class="k">let</span> <span class="n">db_reader</span> <span class="o">=</span> <span class="nn">Arc</span><span class="p">::</span><span class="nf">clone</span><span class="p">(</span><span class="o">&amp;</span><span class="n">db</span><span class="p">);</span>
+        <span class="k">let</span> <span class="n">reader</span> <span class="o">=</span> <span class="nn">thread</span><span class="p">::</span><span class="nf">spawn</span><span class="p">(</span><span class="k">move</span> <span class="p">||</span> <span class="p">{</span>
+            <span class="k">for</span> <span class="n">_</span> <span class="k">in</span> <span class="mi">0</span><span class="o">..</span><span class="mi">8</span> <span class="p">{</span>
+                <span class="c1">// 获取读锁 - 多个读取者可以同时持有读锁</span>
+                <span class="k">let</span> <span class="n">database</span> <span class="o">=</span> <span class="n">db_reader</span><span class="nf">.read</span><span class="p">()</span><span class="nf">.unwrap</span><span class="p">();</span>
+                <span class="nd">println!</span><span class="p">(</span><span class="s">"读取者 {}: 数据量 = {}"</span><span class="p">,</span> <span class="n">id</span><span class="p">,</span> <span class="n">database</span><span class="py">.data</span><span class="nf">.len</span><span class="p">());</span>
+                <span class="c1">// 读锁在作用域结束时释放</span>
+                <span class="nn">thread</span><span class="p">::</span><span class="nf">sleep</span><span class="p">(</span><span class="nn">Duration</span><span class="p">::</span><span class="nf">from_millis</span><span class="p">(</span><span class="mi">50</span><span class="p">));</span>
+            <span class="p">}</span>
+        <span class="p">});</span>
+        <span class="n">readers</span><span class="nf">.push</span><span class="p">(</span><span class="n">reader</span><span class="p">);</span>
+    <span class="p">}</span>
+    
+    <span class="c1">// 等待所有线程完成</span>
+    <span class="n">writer</span><span class="nf">.join</span><span class="p">()</span><span class="nf">.unwrap</span><span class="p">();</span>
+    <span class="k">for</span> <span class="n">reader</span> <span class="k">in</span> <span class="n">readers</span> <span class="p">{</span>
+        <span class="n">reader</span><span class="nf">.join</span><span class="p">()</span><span class="nf">.unwrap</span><span class="p">();</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div> <h4 id="异步mutex示例---适合异步环境">异步Mutex示例 - 适合异步环境</h4> <div class="language-rust highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">use</span> <span class="nn">tokio</span><span class="p">::</span><span class="nn">sync</span><span class="p">::</span><span class="n">Mutex</span><span class="p">;</span>
+<span class="k">use</span> <span class="nn">std</span><span class="p">::</span><span class="nn">sync</span><span class="p">::</span><span class="nb">Arc</span><span class="p">;</span>
+
+<span class="nd">#[tokio::main]</span>
+<span class="k">async</span> <span class="k">fn</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+    <span class="c1">// 创建异步互斥锁</span>
+    <span class="k">let</span> <span class="n">counter</span> <span class="o">=</span> <span class="nn">Arc</span><span class="p">::</span><span class="nf">new</span><span class="p">(</span><span class="nn">Mutex</span><span class="p">::</span><span class="nf">new</span><span class="p">(</span><span class="mi">0</span><span class="p">));</span>
+    <span class="k">let</span> <span class="k">mut</span> <span class="n">handles</span> <span class="o">=</span> <span class="nd">vec!</span><span class="p">[];</span>
+    
+    <span class="c1">// 创建多个异步任务</span>
+    <span class="k">for</span> <span class="n">id</span> <span class="k">in</span> <span class="mi">0</span><span class="o">..</span><span class="mi">10</span> <span class="p">{</span>
+        <span class="k">let</span> <span class="n">counter</span> <span class="o">=</span> <span class="nn">Arc</span><span class="p">::</span><span class="nf">clone</span><span class="p">(</span><span class="o">&amp;</span><span class="n">counter</span><span class="p">);</span>
+        <span class="k">let</span> <span class="n">handle</span> <span class="o">=</span> <span class="nn">tokio</span><span class="p">::</span><span class="nf">spawn</span><span class="p">(</span><span class="k">async</span> <span class="k">move</span> <span class="p">{</span>
+            <span class="c1">// 异步获取锁</span>
+            <span class="k">let</span> <span class="k">mut</span> <span class="n">count</span> <span class="o">=</span> <span class="n">counter</span><span class="nf">.lock</span><span class="p">()</span><span class="k">.await</span><span class="p">;</span>
+            <span class="o">*</span><span class="n">count</span> <span class="o">+=</span> <span class="mi">1</span><span class="p">;</span>
+            <span class="nd">println!</span><span class="p">(</span><span class="s">"任务 {} 将计数器增加到 {}"</span><span class="p">,</span> <span class="n">id</span><span class="p">,</span> <span class="o">*</span><span class="n">count</span><span class="p">);</span>
+            <span class="c1">// 锁在作用域结束时释放</span>
+        <span class="p">});</span>
+        <span class="n">handles</span><span class="nf">.push</span><span class="p">(</span><span class="n">handle</span><span class="p">);</span>
+    <span class="p">}</span>
+    
+    <span class="c1">// 等待所有任务完成</span>
+    <span class="k">for</span> <span class="n">handle</span> <span class="k">in</span> <span class="n">handles</span> <span class="p">{</span>
+        <span class="n">handle</span><span class="k">.await</span><span class="nf">.unwrap</span><span class="p">();</span>
+    <span class="p">}</span>
+    
+    <span class="c1">// 输出最终结果</span>
+    <span class="nd">println!</span><span class="p">(</span><span class="s">"计数器最终值: {}"</span><span class="p">,</span> <span class="o">*</span><span class="n">counter</span><span class="nf">.lock</span><span class="p">()</span><span class="k">.await</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div></div> <h4 id="semaphore示例---限制并发数量">Semaphore示例 - 限制并发数量</h4> <div class="language-rust highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">use</span> <span class="nn">tokio</span><span class="p">::</span><span class="nn">sync</span><span class="p">::</span><span class="n">Semaphore</span><span class="p">;</span>
+<span class="k">use</span> <span class="nn">std</span><span class="p">::</span><span class="nn">sync</span><span class="p">::</span><span class="nb">Arc</span><span class="p">;</span>
+<span class="k">use</span> <span class="nn">tokio</span><span class="p">::</span><span class="nn">time</span><span class="p">::{</span><span class="n">sleep</span><span class="p">,</span> <span class="n">Duration</span><span class="p">};</span>
+
+<span class="nd">#[tokio::main]</span>
+<span class="k">async</span> <span class="k">fn</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+    <span class="c1">// 创建信号量，最多允许3个并发任务</span>
+    <span class="k">let</span> <span class="n">semaphore</span> <span class="o">=</span> <span class="nn">Arc</span><span class="p">::</span><span class="nf">new</span><span class="p">(</span><span class="nn">Semaphore</span><span class="p">::</span><span class="nf">new</span><span class="p">(</span><span class="mi">3</span><span class="p">));</span>
+    <span class="k">let</span> <span class="k">mut</span> <span class="n">handles</span> <span class="o">=</span> <span class="nd">vec!</span><span class="p">[];</span>
+    
+    <span class="c1">// 创建8个任务，但最多只有3个能同时执行</span>
+    <span class="k">for</span> <span class="n">id</span> <span class="k">in</span> <span class="mi">0</span><span class="o">..</span><span class="mi">8</span> <span class="p">{</span>
+        <span class="k">let</span> <span class="n">semaphore</span> <span class="o">=</span> <span class="nn">Arc</span><span class="p">::</span><span class="nf">clone</span><span class="p">(</span><span class="o">&amp;</span><span class="n">semaphore</span><span class="p">);</span>
+        <span class="k">let</span> <span class="n">handle</span> <span class="o">=</span> <span class="nn">tokio</span><span class="p">::</span><span class="nf">spawn</span><span class="p">(</span><span class="k">async</span> <span class="k">move</span> <span class="p">{</span>
+            <span class="c1">// 获取许可</span>
+            <span class="k">let</span> <span class="n">permit</span> <span class="o">=</span> <span class="n">semaphore</span><span class="nf">.acquire</span><span class="p">()</span><span class="k">.await</span><span class="nf">.unwrap</span><span class="p">();</span>
+            <span class="nd">println!</span><span class="p">(</span><span class="s">"任务 {} 获得许可，开始执行"</span><span class="p">,</span> <span class="n">id</span><span class="p">);</span>
+            
+            <span class="c1">// 模拟工作</span>
+            <span class="nf">sleep</span><span class="p">(</span><span class="nn">Duration</span><span class="p">::</span><span class="nf">from_millis</span><span class="p">(</span><span class="mi">500</span><span class="p">))</span><span class="k">.await</span><span class="p">;</span>
+            
+            <span class="nd">println!</span><span class="p">(</span><span class="s">"任务 {} 完成执行"</span><span class="p">,</span> <span class="n">id</span><span class="p">);</span>
+            <span class="c1">// 许可在permit被drop时自动释放</span>
+            <span class="nf">drop</span><span class="p">(</span><span class="n">permit</span><span class="p">);</span>
+        <span class="p">});</span>
+        <span class="n">handles</span><span class="nf">.push</span><span class="p">(</span><span class="n">handle</span><span class="p">);</span>
+    <span class="p">}</span>
+    
+    <span class="c1">// 等待所有任务完成</span>
+    <span class="k">for</span> <span class="n">handle</span> <span class="k">in</span> <span class="n">handles</span> <span class="p">{</span>
+        <span class="n">handle</span><span class="k">.await</span><span class="nf">.unwrap</span><span class="p">();</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div> <h4 id="barrier示例---线程同步点">Barrier示例 - 线程同步点</h4> <div class="language-rust highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">use</span> <span class="nn">std</span><span class="p">::</span><span class="nn">sync</span><span class="p">::{</span><span class="nb">Arc</span><span class="p">,</span> <span class="n">Barrier</span><span class="p">};</span>
+<span class="k">use</span> <span class="nn">std</span><span class="p">::</span><span class="n">thread</span><span class="p">;</span>
+<span class="k">use</span> <span class="nn">std</span><span class="p">::</span><span class="nn">time</span><span class="p">::</span><span class="n">Duration</span><span class="p">;</span>
+
+<span class="k">fn</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+    <span class="c1">// 创建屏障，等待3个线程</span>
+    <span class="k">let</span> <span class="n">barrier</span> <span class="o">=</span> <span class="nn">Arc</span><span class="p">::</span><span class="nf">new</span><span class="p">(</span><span class="nn">Barrier</span><span class="p">::</span><span class="nf">new</span><span class="p">(</span><span class="mi">3</span><span class="p">));</span>
+    <span class="k">let</span> <span class="k">mut</span> <span class="n">handles</span> <span class="o">=</span> <span class="nd">vec!</span><span class="p">[];</span>
+    
+    <span class="k">for</span> <span class="n">id</span> <span class="k">in</span> <span class="mi">0</span><span class="o">..</span><span class="mi">3</span> <span class="p">{</span>
+        <span class="k">let</span> <span class="n">barrier</span> <span class="o">=</span> <span class="nn">Arc</span><span class="p">::</span><span class="nf">clone</span><span class="p">(</span><span class="o">&amp;</span><span class="n">barrier</span><span class="p">);</span>
+        <span class="k">let</span> <span class="n">handle</span> <span class="o">=</span> <span class="nn">thread</span><span class="p">::</span><span class="nf">spawn</span><span class="p">(</span><span class="k">move</span> <span class="p">||</span> <span class="p">{</span>
+            <span class="nd">println!</span><span class="p">(</span><span class="s">"线程 {} 开始执行第一阶段"</span><span class="p">,</span> <span class="n">id</span><span class="p">);</span>
+            <span class="nn">thread</span><span class="p">::</span><span class="nf">sleep</span><span class="p">(</span><span class="nn">Duration</span><span class="p">::</span><span class="nf">from_millis</span><span class="p">(</span><span class="mi">100</span> <span class="o">*</span> <span class="n">id</span><span class="p">));</span> <span class="c1">// 模拟不同的工作时间</span>
+            <span class="nd">println!</span><span class="p">(</span><span class="s">"线程 {} 完成第一阶段"</span><span class="p">,</span> <span class="n">id</span><span class="p">);</span>
+            
+            <span class="c1">// 等待所有线程完成第一阶段</span>
+            <span class="k">let</span> <span class="n">wait_result</span> <span class="o">=</span> <span class="n">barrier</span><span class="nf">.wait</span><span class="p">();</span>
+            
+            <span class="c1">// 只有一个线程的wait()会返回BarrierWaitResult::Leader</span>
+            <span class="k">if</span> <span class="n">wait_result</span><span class="nf">.is_leader</span><span class="p">()</span> <span class="p">{</span>
+                <span class="nd">println!</span><span class="p">(</span><span class="s">"所有线程完成第一阶段，继续执行"</span><span class="p">);</span>
+            <span class="p">}</span>
+            
+            <span class="nd">println!</span><span class="p">(</span><span class="s">"线程 {} 开始执行第二阶段"</span><span class="p">,</span> <span class="n">id</span><span class="p">);</span>
+            <span class="c1">// 继续执行第二阶段...</span>
+        <span class="p">});</span>
+        <span class="n">handles</span><span class="nf">.push</span><span class="p">(</span><span class="n">handle</span><span class="p">);</span>
+    <span class="p">}</span>
+    
+    <span class="c1">// 等待所有线程完成</span>
+    <span class="k">for</span> <span class="n">handle</span> <span class="k">in</span> <span class="n">handles</span> <span class="p">{</span>
+        <span class="n">handle</span><span class="nf">.join</span><span class="p">()</span><span class="nf">.unwrap</span><span class="p">();</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div> <h4 id="once示例---一次性初始化">Once示例 - 一次性初始化</h4> <div class="language-rust highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">use</span> <span class="nn">std</span><span class="p">::</span><span class="nn">sync</span><span class="p">::</span><span class="n">Once</span><span class="p">;</span>
+<span class="k">use</span> <span class="nn">std</span><span class="p">::</span><span class="n">thread</span><span class="p">;</span>
+
+<span class="c1">// 全局静态变量</span>
+<span class="k">static</span> <span class="n">INIT</span><span class="p">:</span> <span class="n">Once</span> <span class="o">=</span> <span class="nn">Once</span><span class="p">::</span><span class="nf">new</span><span class="p">();</span>
+<span class="k">static</span> <span class="k">mut</span> <span class="n">CONFIG</span><span class="p">:</span> <span class="nb">Option</span> <span class="o">=</span> <span class="nb">None</span><span class="p">;</span>
+
+<span class="k">fn</span> <span class="nf">get_config</span><span class="p">()</span> <span class="k">-&gt;</span> <span class="o">&amp;</span><span class="k">'static</span> <span class="nb">str</span> <span class="p">{</span>
+    <span class="c1">// 确保初始化代码只执行一次</span>
+    <span class="n">INIT</span><span class="nf">.call_once</span><span class="p">(||</span> <span class="p">{</span>
+        <span class="c1">// 这段代码只会执行一次</span>
+        <span class="nd">println!</span><span class="p">(</span><span class="s">"正在初始化配置..."</span><span class="p">);</span>
+        <span class="c1">// 模拟耗时的初始化过程</span>
+        <span class="nn">thread</span><span class="p">::</span><span class="nf">sleep</span><span class="p">(</span><span class="nn">std</span><span class="p">::</span><span class="nn">time</span><span class="p">::</span><span class="nn">Duration</span><span class="p">::</span><span class="nf">from_millis</span><span class="p">(</span><span class="mi">100</span><span class="p">));</span>
+        
+        <span class="c1">// 安全地初始化静态变量</span>
+        <span class="k">unsafe</span> <span class="p">{</span>
+            <span class="n">CONFIG</span> <span class="o">=</span> <span class="nf">Some</span><span class="p">(</span><span class="nn">String</span><span class="p">::</span><span class="nf">from</span><span class="p">(</span><span class="s">"数据库配置信息"</span><span class="p">));</span>
+        <span class="p">}</span>
+        <span class="nd">println!</span><span class="p">(</span><span class="s">"配置初始化完成"</span><span class="p">);</span>
+    <span class="p">});</span>
+    
+    <span class="c1">// 安全地访问已初始化的静态变量</span>
+    <span class="k">unsafe</span> <span class="p">{</span>
+        <span class="n">CONFIG</span><span class="nf">.as_ref</span><span class="p">()</span><span class="nf">.unwrap</span><span class="p">()</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="k">fn</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+    <span class="c1">// 创建多个线程，都尝试初始化配置</span>
+    <span class="k">let</span> <span class="k">mut</span> <span class="n">handles</span> <span class="o">=</span> <span class="nd">vec!</span><span class="p">[];</span>
+    
+    <span class="k">for</span> <span class="n">id</span> <span class="k">in</span> <span class="mi">0</span><span class="o">..</span><span class="mi">5</span> <span class="p">{</span>
+        <span class="k">let</span> <span class="n">handle</span> <span class="o">=</span> <span class="nn">thread</span><span class="p">::</span><span class="nf">spawn</span><span class="p">(</span><span class="k">move</span> <span class="p">||</span> <span class="p">{</span>
+            <span class="nd">println!</span><span class="p">(</span><span class="s">"线程 {} 请求配置"</span><span class="p">,</span> <span class="n">id</span><span class="p">);</span>
+            <span class="k">let</span> <span class="n">config</span> <span class="o">=</span> <span class="nf">get_config</span><span class="p">();</span>
+            <span class="nd">println!</span><span class="p">(</span><span class="s">"线程 {} 获得配置: {}"</span><span class="p">,</span> <span class="n">id</span><span class="p">,</span> <span class="n">config</span><span class="p">);</span>
+        <span class="p">});</span>
+        <span class="n">handles</span><span class="nf">.push</span><span class="p">(</span><span class="n">handle</span><span class="p">);</span>
+    <span class="p">}</span>
+    
+    <span class="c1">// 等待所有线程完成</span>
+    <span class="k">for</span> <span class="n">handle</span> <span class="k">in</span> <span class="n">handles</span> <span class="p">{</span>
+        <span class="n">handle</span><span class="nf">.join</span><span class="p">()</span><span class="nf">.unwrap</span><span class="p">();</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div> <h4 id="parking_lot库示例---高性能锁">parking_lot库示例 - 高性能锁</h4> <div class="language-rust highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">use</span> <span class="nn">parking_lot</span><span class="p">::{</span><span class="n">Mutex</span><span class="p">,</span> <span class="n">RwLock</span><span class="p">};</span>
+<span class="k">use</span> <span class="nn">std</span><span class="p">::</span><span class="nn">sync</span><span class="p">::</span><span class="nb">Arc</span><span class="p">;</span>
+<span class="k">use</span> <span class="nn">std</span><span class="p">::</span><span class="n">thread</span><span class="p">;</span>
+<span class="k">use</span> <span class="nn">std</span><span class="p">::</span><span class="nn">time</span><span class="p">::</span><span class="n">Duration</span><span class="p">;</span>
+
+<span class="k">fn</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+    <span class="c1">// parking_lot的Mutex不返回Result，API更简洁</span>
+    <span class="k">let</span> <span class="n">counter</span> <span class="o">=</span> <span class="nn">Arc</span><span class="p">::</span><span class="nf">new</span><span class="p">(</span><span class="nn">Mutex</span><span class="p">::</span><span class="nf">new</span><span class="p">(</span><span class="mi">0</span><span class="p">));</span>
+    
+    <span class="c1">// 创建线程递增计数器</span>
+    <span class="k">let</span> <span class="n">counter_clone</span> <span class="o">=</span> <span class="nn">Arc</span><span class="p">::</span><span class="nf">clone</span><span class="p">(</span><span class="o">&amp;</span><span class="n">counter</span><span class="p">);</span>
+    <span class="k">let</span> <span class="n">handle</span> <span class="o">=</span> <span class="nn">thread</span><span class="p">::</span><span class="nf">spawn</span><span class="p">(</span><span class="k">move</span> <span class="p">||</span> <span class="p">{</span>
+        <span class="k">let</span> <span class="k">mut</span> <span class="n">count</span> <span class="o">=</span> <span class="n">counter_clone</span><span class="nf">.lock</span><span class="p">();</span> <span class="c1">// 不需要unwrap()</span>
+        <span class="o">*</span><span class="n">count</span> <span class="o">+=</span> <span class="mi">1</span><span class="p">;</span>
+    <span class="p">});</span>
+    
+    <span class="c1">// parking_lot的RwLock也更简洁</span>
+    <span class="k">let</span> <span class="n">data</span> <span class="o">=</span> <span class="nn">Arc</span><span class="p">::</span><span class="nf">new</span><span class="p">(</span><span class="nn">RwLock</span><span class="p">::</span><span class="nf">new</span><span class="p">(</span><span class="nd">vec!</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">]));</span>
+    
+    <span class="c1">// 读取线程</span>
+    <span class="k">let</span> <span class="n">data_clone</span> <span class="o">=</span> <span class="nn">Arc</span><span class="p">::</span><span class="nf">clone</span><span class="p">(</span><span class="o">&amp;</span><span class="n">data</span><span class="p">);</span>
+    <span class="k">let</span> <span class="n">read_handle</span> <span class="o">=</span> <span class="nn">thread</span><span class="p">::</span><span class="nf">spawn</span><span class="p">(</span><span class="k">move</span> <span class="p">||</span> <span class="p">{</span>
+        <span class="k">let</span> <span class="n">values</span> <span class="o">=</span> <span class="n">data_clone</span><span class="nf">.read</span><span class="p">();</span> <span class="c1">// 不需要unwrap()</span>
+        <span class="nd">println!</span><span class="p">(</span><span class="s">"读取数据: {:?}"</span><span class="p">,</span> <span class="o">*</span><span class="n">values</span><span class="p">);</span>
+    <span class="p">});</span>
+    
+    <span class="c1">// 写入线程</span>
+    <span class="k">let</span> <span class="n">data_clone</span> <span class="o">=</span> <span class="nn">Arc</span><span class="p">::</span><span class="nf">clone</span><span class="p">(</span><span class="o">&amp;</span><span class="n">data</span><span class="p">);</span>
+    <span class="k">let</span> <span class="n">write_handle</span> <span class="o">=</span> <span class="nn">thread</span><span class="p">::</span><span class="nf">spawn</span><span class="p">(</span><span class="k">move</span> <span class="p">||</span> <span class="p">{</span>
+        <span class="k">let</span> <span class="k">mut</span> <span class="n">values</span> <span class="o">=</span> <span class="n">data_clone</span><span class="nf">.write</span><span class="p">();</span> <span class="c1">// 不需要unwrap()</span>
+        <span class="n">values</span><span class="nf">.push</span><span class="p">(</span><span class="mi">4</span><span class="p">);</span>
+    <span class="p">});</span>
+    
+    <span class="c1">// 等待所有线程完成</span>
+    <span class="n">handle</span><span class="nf">.join</span><span class="p">()</span><span class="nf">.unwrap</span><span class="p">();</span>
+    <span class="n">read_handle</span><span class="nf">.join</span><span class="p">()</span><span class="nf">.unwrap</span><span class="p">();</span>
+    <span class="n">write_handle</span><span class="nf">.join</span><span class="p">()</span><span class="nf">.unwrap</span><span class="p">();</span>
+    
+    <span class="c1">// 输出最终结果</span>
+    <span class="nd">println!</span><span class="p">(</span><span class="s">"计数器最终值: {}"</span><span class="p">,</span> <span class="o">*</span><span class="n">counter</span><span class="nf">.lock</span><span class="p">());</span>
+    <span class="nd">println!</span><span class="p">(</span><span class="s">"数据最终值: {:?}"</span><span class="p">,</span> <span class="o">*</span><span class="n">data</span><span class="nf">.read</span><span class="p">());</span>
+    
+    <span class="c1">// parking_lot还支持尝试加锁，不会阻塞</span>
+    <span class="k">if</span> <span class="k">let</span> <span class="nf">Some</span><span class="p">(</span><span class="k">mut</span> <span class="n">count</span><span class="p">)</span> <span class="o">=</span> <span class="n">counter</span><span class="nf">.try_lock</span><span class="p">()</span> <span class="p">{</span>
+        <span class="o">*</span><span class="n">count</span> <span class="o">+=</span> <span class="mi">1</span><span class="p">;</span>
+        <span class="nd">println!</span><span class="p">(</span><span class="s">"成功获取锁并递增: {}"</span><span class="p">,</span> <span class="o">*</span><span class="n">count</span><span class="p">);</span>
+    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+        <span class="nd">println!</span><span class="p">(</span><span class="s">"锁被占用，无法获取"</span><span class="p">);</span>
+    <span class="p">}</span>
+    
+    <span class="c1">// parking_lot支持带超时的锁</span>
+    <span class="k">let</span> <span class="n">timeout</span> <span class="o">=</span> <span class="nn">Duration</span><span class="p">::</span><span class="nf">from_millis</span><span class="p">(</span><span class="mi">100</span><span class="p">);</span>
+    <span class="k">if</span> <span class="k">let</span> <span class="nf">Some</span><span class="p">(</span><span class="k">mut</span> <span class="n">count</span><span class="p">)</span> <span class="o">=</span> <span class="n">counter</span><span class="nf">.try_lock_for</span><span class="p">(</span><span class="n">timeout</span><span class="p">)</span> <span class="p">{</span>
+        <span class="o">*</span><span class="n">count</span> <span class="o">+=</span> <span class="mi">1</span><span class="p">;</span>
+        <span class="nd">println!</span><span class="p">(</span><span class="s">"在超时前成功获取锁: {}"</span><span class="p">,</span> <span class="o">*</span><span class="n">count</span><span class="p">);</span>
+    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+        <span class="nd">println!</span><span class="p">(</span><span class="s">"等待超时，无法获取锁"</span><span class="p">);</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div> <h3 id="44-锁的最佳实践">4.4 锁的最佳实践</h3> <ol> <li> <p><strong>关于选择库</strong></p> <ul> <li> <p>尽量避免对标准库 std::sync 模块中锁同步原语的使用，建议使用 parking_lot 的实现。</p> </li> <li> <p>尽量避免直接使用标准库 std::sync::mpsc 模块中的 channel，替换为 crossbeam</p> </li> </ul> </li> <li> <p><strong>尽量减小锁的范围，但要避免过细粒度的锁，锁的获取和释放有开销</strong></p> <ul> <li> <p>只锁定真正需要保护的代码，尽早释放锁，可以使用代码块或显式调用<code class="language-plaintext highlighter-rouge">drop()</code></p> </li> <li> <p>可以在函数级别加锁，在函数开头加锁，加锁的函数在命名的时候需要用动词说明对数据有增删改查的操作（Rust）；也可以在数据结构的维度加锁，用的时候加锁，用完就释放。</p> </li> </ul> </li> <li> <p><strong>避免死锁</strong>：保持一致的锁获取顺序，使用<code class="language-plaintext highlighter-rouge">try_lock()</code>或带超时的锁，避免在持有锁时调用可能获取其他锁的代码</p> </li> </ol> <p>4) <strong>处理锁中的panic</strong>：Rust的锁在panic时会被毒化(poisoned)，确保锁在panic时释放。考虑使用<code class="language-plaintext highlighter-rouge">parking_lot</code>库，它的锁不会被毒化</p> <ol> <li> <p><strong>考虑无锁替代方案</strong></p> <ul> <li> <p>对于简单数据，考虑使用原子类型</p> </li> <li> <p>使用消息传递代替共享状态</p> </li> <li> <p>设计无共享的数据结构</p> </li> </ul> </li> </ol> <h2 id="5-原子式加锁">5. 原子式加锁</h2> <p>原子操作利用CPU的原子指令实现，是不可分割的操作，要么完全执行，要么完全不执行，没有中间状态。线程不会因为等待锁而被阻塞，在并发编程中，原子操作可以在不使用锁的情况下实现线程安全的数据访问，具有更低的开销。</p> <h3 id="51-原子类型">5.1 原子类型</h3> <p>Rust中的原子操作非常丰富，主要通过<code class="language-plaintext highlighter-rouge">std::sync::atomic</code>模块提供：</p> <div class="language-rust highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">use</span> <span class="nn">std</span><span class="p">::</span><span class="nn">sync</span><span class="p">::</span><span class="nn">atomic</span><span class="p">::</span><span class="o">*</span><span class="p">;</span>
+
+<span class="c1">// 整数类型</span>
+<span class="n">AtomicBool</span><span class="p">,</span> <span class="n">AtomicI8</span><span class="p">,</span> <span class="n">AtomicI16</span><span class="p">,</span> <span class="n">AtomicI32</span><span class="p">,</span> <span class="n">AtomicI64</span><span class="p">,</span> <span class="n">AtomicIsize</span>
+<span class="n">AtomicU8</span><span class="p">,</span> <span class="n">AtomicU16</span><span class="p">,</span> <span class="n">AtomicU32</span><span class="p">,</span> <span class="n">AtomicU64</span><span class="p">,</span> <span class="n">AtomicUsize</span>
+
+<span class="c1">// 指针类型</span>
+<span class="n">AtomicPtr</span>
+</code></pre></div></div> <p>与锁相比，原子操作的优势在于：</p> <div class="language-rust highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// Mutex - 有锁</span>
+<span class="k">let</span> <span class="n">counter</span> <span class="o">=</span> <span class="nn">Arc</span><span class="p">::</span><span class="nf">new</span><span class="p">(</span><span class="nn">Mutex</span><span class="p">::</span><span class="nf">new</span><span class="p">(</span><span class="mi">0u64</span><span class="p">));</span>
+<span class="k">let</span> <span class="k">mut</span> <span class="n">guard</span> <span class="o">=</span> <span class="n">counter</span><span class="nf">.lock</span><span class="p">()</span><span class="nf">.unwrap</span><span class="p">();</span> <span class="c1">// 获取锁，可能阻塞</span>
+<span class="o">*</span><span class="n">guard</span> <span class="o">+=</span> <span class="mi">1</span><span class="p">;</span> <span class="c1">// 修改数据</span>
+<span class="c1">// guard 被 drop 时释放锁</span>
+
+<span class="c1">// AtomicU64 - 无锁</span>
+<span class="k">let</span> <span class="n">counter</span> <span class="o">=</span> <span class="nn">Arc</span><span class="p">::</span><span class="nf">new</span><span class="p">(</span><span class="nn">AtomicU64</span><span class="p">::</span><span class="nf">new</span><span class="p">(</span><span class="mi">0</span><span class="p">));</span>
+<span class="n">counter</span><span class="nf">.fetch_add</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nn">Ordering</span><span class="p">::</span><span class="n">Relaxed</span><span class="p">);</span> <span class="c1">// 直接原子操作，不会阻塞等锁</span>
+</code></pre></div></div> <h3 id="52-原子操作中的内存顺序">5.2 原子操作中的内存顺序</h3> <p>内存顺序（Memory Ordering）控制原子操作在多线程环境中如何与其他操作交互。这是因为现代CPU和编译器会对指令进行重排序以提高性能。</p> <p>编译器和CPU为了性能优化，会重新排列指令的执行顺序，只要不影响<strong>单线程</strong>的程序逻辑：</p> <div class="language-rust highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// 原始代码</span>
+<span class="k">let</span> <span class="k">mut</span> <span class="n">x</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="k">let</span> <span class="k">mut</span> <span class="n">y</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="n">x</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>           <span class="c1">// 操作A</span>
+<span class="n">y</span> <span class="o">=</span> <span class="mi">2</span><span class="p">;</span>           <span class="c1">// 操作B</span>
+<span class="nd">println!</span><span class="p">(</span><span class="s">"{}"</span><span class="p">,</span> <span class="n">x</span><span class="p">);</span>
+
+<span class="c1">// 编译器/CPU 可能重排为：</span>
+<span class="k">let</span> <span class="k">mut</span> <span class="n">x</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="k">let</span> <span class="k">mut</span> <span class="n">y</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="n">y</span> <span class="o">=</span> <span class="mi">2</span><span class="p">;</span>           <span class="c1">// 操作B 先执行</span>
+<span class="n">x</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>           <span class="c1">// 操作A 后执行  </span>
+<span class="nd">println!</span><span class="p">(</span><span class="s">"{}"</span><span class="p">,</span> <span class="n">x</span><span class="p">);</span>
+<span class="c1">// 单线程下结果一样，但多线程下可能出问题</span>
+</code></pre></div></div> <p>Rust提供了不同的内存顺序级别来控制这种重排：</p> <div class="language-rust highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">use</span> <span class="nn">std</span><span class="p">::</span><span class="nn">sync</span><span class="p">::</span><span class="nn">atomic</span><span class="p">::</span><span class="n">Ordering</span><span class="p">;</span>
+
+<span class="nn">Ordering</span><span class="p">::</span><span class="n">Relaxed</span>    <span class="c1">// 只保证原子性，没有同步或顺序约束</span>
+<span class="nn">Ordering</span><span class="p">::</span><span class="n">Acquire</span>    <span class="c1">// 获取屏障：阻止后续读写重排到此操作之前</span>
+<span class="nn">Ordering</span><span class="p">::</span><span class="n">Release</span>    <span class="c1">// 释放屏障：阻止之前读写重排到此操作之后  </span>
+<span class="nn">Ordering</span><span class="p">::</span><span class="n">AcqRel</span>     <span class="c1">// 同时具有获取和释放语义</span>
+<span class="nn">Ordering</span><span class="p">::</span><span class="n">SeqCst</span>     <span class="c1">// 顺序一致性：全局统一的操作顺序</span>
+</code></pre></div></div> <h4 id="acquire-release模式">Acquire-Release模式</h4> <p>这是最常用的同步模式，类似于锁的获取和释放：</p> <p><strong>Release（释放）</strong>：像一个”单向屏障”，阻止之前的读写操作重排到这个store操作之后。</p> <div class="language-rust highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// 生产者线程</span>
+<span class="k">fn</span> <span class="nf">producer</span><span class="p">()</span> <span class="p">{</span>
+    <span class="n">DATA</span><span class="nf">.store</span><span class="p">(</span><span class="mi">42</span><span class="p">,</span> <span class="nn">Ordering</span><span class="p">::</span><span class="n">Relaxed</span><span class="p">);</span>      <span class="c1">// 操作1：设置数据</span>
+    <span class="n">READY</span><span class="nf">.store</span><span class="p">(</span><span class="k">true</span><span class="p">,</span> <span class="nn">Ordering</span><span class="p">::</span><span class="n">Release</span><span class="p">);</span>   <span class="c1">// 操作2：Release屏障</span>
+<span class="p">}</span>
+<span class="c1">// Release 确保：</span>
+<span class="c1">// 1. DATA.store(42, ...) 必须先执行完</span>
+<span class="c1">// 2. READY.store(true, Release) 之前的操作不能重排到这之后</span>
+<span class="c1">// 结果：数据总是在标志位之前被设置</span>
+</code></pre></div></div> <p><strong>Acquire（获取）</strong>：像一个”单向屏障”，阻止后续的读写操作重排到这个load操作之前。</p> <div class="language-rust highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// 错误示例：使用 Relaxed</span>
+<span class="k">fn</span> <span class="nf">consumer_wrong</span><span class="p">()</span> <span class="p">{</span>
+    <span class="k">if</span> <span class="n">READY</span><span class="nf">.load</span><span class="p">(</span><span class="nn">Ordering</span><span class="p">::</span><span class="n">Relaxed</span><span class="p">)</span> <span class="p">{</span>  <span class="c1">// 操作1</span>
+        <span class="k">let</span> <span class="n">value</span> <span class="o">=</span> <span class="n">DATA</span><span class="nf">.load</span><span class="p">(</span><span class="nn">Ordering</span><span class="p">::</span><span class="n">Relaxed</span><span class="p">);</span>  <span class="c1">// 操作2</span>
+        <span class="nd">println!</span><span class="p">(</span><span class="s">"Data: {}"</span><span class="p">,</span> <span class="n">value</span><span class="p">);</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="c1">// 正确示例：使用 Acquire  </span>
+<span class="k">fn</span> <span class="nf">consumer_correct</span><span class="p">()</span> <span class="p">{</span>
+    <span class="k">if</span> <span class="n">READY</span><span class="nf">.load</span><span class="p">(</span><span class="nn">Ordering</span><span class="p">::</span><span class="n">Acquire</span><span class="p">)</span> <span class="p">{</span>  <span class="c1">// 操作1：Acquire屏障</span>
+        <span class="k">let</span> <span class="n">value</span> <span class="o">=</span> <span class="n">DATA</span><span class="nf">.load</span><span class="p">(</span><span class="nn">Ordering</span><span class="p">::</span><span class="n">Relaxed</span><span class="p">);</span>  <span class="c1">// 操作2：不能重排到操作1之前</span>
+        <span class="nd">println!</span><span class="p">(</span><span class="s">"Data: {}"</span><span class="p">,</span> <span class="n">value</span><span class="p">);</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="c1">// 如果没有Acquire，CPU 可能的重排序：</span>
+<span class="c1">// 1. let value = DATA.load(...) // 先读数据</span>
+<span class="c1">// 2. if READY.load(...)         // 后检查就绪标志</span>
+<span class="c1">// 结果：可能读到未初始化的数据！</span>
+</code></pre></div></div> <h4 id="内存顺序选择指南">内存顺序选择指南</h4> <div class="language-rust highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// 决策树</span>
+<span class="k">fn</span> <span class="nf">choose_ordering</span><span class="p">()</span> <span class="p">{</span>
+    <span class="c1">// 1. 问：这个操作需要与其他操作同步吗？</span>
+    <span class="k">if</span> <span class="nf">needs_synchronization</span><span class="p">()</span> <span class="p">{</span>
+        <span class="c1">// 2. 问：是否需要全局一致的顺序？</span>
+        <span class="k">if</span> <span class="nf">needs_global_order</span><span class="p">()</span> <span class="p">{</span>
+            <span class="c1">// 使用 SeqCst</span>
+        <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+            <span class="c1">// 3. 问：是发布数据还是消费数据？</span>
+            <span class="k">if</span> <span class="nf">publishing_data</span><span class="p">()</span> <span class="p">{</span>
+                <span class="c1">// 使用 Release</span>
+            <span class="p">}</span> <span class="k">else</span> <span class="k">if</span> <span class="nf">consuming_data</span><span class="p">()</span> <span class="p">{</span>
+                <span class="c1">// 使用 Acquire  </span>
+            <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+                <span class="c1">// 既发布又消费，使用 AcqRel</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+        <span class="c1">// 只需要原子性，使用 Relaxed</span>
+        <span class="c1">// 不需要同步：不关心与其他操作的顺序关系</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div> <h3 id="53-原子操作代码示例">5.3 原子操作代码示例</h3> <div class="language-rust highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">use</span> <span class="nn">std</span><span class="p">::</span><span class="nn">sync</span><span class="p">::</span><span class="nn">atomic</span><span class="p">::{</span><span class="n">AtomicU64</span><span class="p">,</span> <span class="n">Ordering</span><span class="p">};</span>
+
+<span class="k">let</span> <span class="n">atomic</span> <span class="o">=</span> <span class="nn">AtomicU64</span><span class="p">::</span><span class="nf">new</span><span class="p">(</span><span class="mi">0</span><span class="p">);</span>
+
+<span class="c1">// 读取</span>
+<span class="k">let</span> <span class="n">value</span> <span class="o">=</span> <span class="n">atomic</span><span class="nf">.load</span><span class="p">(</span><span class="nn">Ordering</span><span class="p">::</span><span class="n">Relaxed</span><span class="p">);</span>
+
+<span class="c1">// 存储</span>
+<span class="n">atomic</span><span class="nf">.store</span><span class="p">(</span><span class="mi">42</span><span class="p">,</span> <span class="nn">Ordering</span><span class="p">::</span><span class="n">Relaxed</span><span class="p">);</span>
+
+<span class="c1">// 原子加法</span>
+<span class="k">let</span> <span class="n">old_value</span> <span class="o">=</span> <span class="n">atomic</span><span class="nf">.fetch_add</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="nn">Ordering</span><span class="p">::</span><span class="n">Relaxed</span><span class="p">);</span>
+
+<span class="c1">// 原子最大值更新</span>
+<span class="n">atomic</span><span class="nf">.fetch_max</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span> <span class="nn">Ordering</span><span class="p">::</span><span class="n">Relaxed</span><span class="p">);</span>
+
+<span class="c1">// 比较并交换</span>
+<span class="c1">// atomic.compare_exchange(期望值, 新值, 成功时的内存顺序, 失败时的内存顺序)</span>
+<span class="c1">// 如果当前值等于期望值，就替换为新值，否则不做任何操作。</span>
+<span class="c1">// 多个线程可能同时尝试修改同一个值，我们需要确保只有一个线程成功</span>
+<span class="k">let</span> <span class="n">result</span> <span class="o">=</span> <span class="n">atomic</span><span class="nf">.compare_exchange</span><span class="p">(</span><span class="mi">42</span><span class="p">,</span> <span class="mi">99</span><span class="p">,</span> <span class="nn">Ordering</span><span class="p">::</span><span class="n">Relaxed</span><span class="p">,</span> <span class="nn">Ordering</span><span class="p">::</span><span class="n">Relaxed</span><span class="p">);</span>
+</code></pre></div></div> <div class="language-rust highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// 实现一个原子计数器，只在值小于100时递增</span>
+<span class="k">fn</span> <span class="nf">increment_if_less_than_100</span><span class="p">(</span><span class="n">counter</span><span class="p">:</span> <span class="o">&amp;</span><span class="n">AtomicU64</span><span class="p">)</span> <span class="k">-&gt;</span> <span class="nb">bool</span> <span class="p">{</span>
+    <span class="k">loop</span> <span class="p">{</span>
+        <span class="k">let</span> <span class="n">current</span> <span class="o">=</span> <span class="n">counter</span><span class="nf">.load</span><span class="p">(</span><span class="nn">Ordering</span><span class="p">::</span><span class="n">Relaxed</span><span class="p">);</span>
+        <span class="k">if</span> <span class="n">current</span> <span class="o">&gt;=</span> <span class="mi">100</span> <span class="p">{</span>
+            <span class="k">return</span> <span class="k">false</span><span class="p">;</span> <span class="c1">// 已经达到上限</span>
+        <span class="p">}</span>
+        <span class="c1">// 尝试将 current 替换为 current + 1</span>
+        <span class="k">match</span> <span class="n">counter</span><span class="nf">.compare_exchange</span><span class="p">(</span><span class="n">current</span><span class="p">,</span> <span class="n">current</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="nn">Ordering</span><span class="p">::</span><span class="n">Relaxed</span><span class="p">,</span> <span class="nn">Ordering</span><span class="p">::</span><span class="n">Relaxed</span><span class="p">)</span> <span class="p">{</span>
+            <span class="nf">Ok</span><span class="p">(</span><span class="n">_</span><span class="p">)</span> <span class="k">=&gt;</span> <span class="k">return</span> <span class="k">true</span><span class="p">,</span>  <span class="c1">// 成功递增</span>
+            <span class="nf">Err</span><span class="p">(</span><span class="n">_</span><span class="p">)</span> <span class="k">=&gt;</span> <span class="p">{</span>
+                <span class="c1">// 失败说明值被其他线程改了，重试</span>
+                <span class="k">continue</span><span class="p">;</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div> <h2 id="6-channel-通道">6. Channel (通道)</h2> <p>Channel是线程间通信的强大工具，它允许线程之间安全地传递消息。</p> <h3 id="61-channel类型对比">6.1 Channel类型对比</h3> <table> <thead> <tr> <th>类型</th> <th>特点</th> <th>适用场景</th> </tr> </thead> <tbody> <tr> <td>std::sync::mpsc</td> <td>多生产者，单消费者</td> <td>简单的工作队列</td> </tr> <tr> <td>crossbeam_channel</td> <td>多生产者，多消费者</td> <td>高性能工作分发</td> </tr> <tr> <td>tokio::sync::mpsc</td> <td>异步多生产者，单消费者</td> <td>异步任务间通信</td> </tr> <tr> <td>tokio::sync::broadcast</td> <td>广播，多接收者都收到消息</td> <td>事件通知、配置更新</td> </tr> <tr> <td>tokio::sync::oneshot</td> <td>一次性，单发送单接收</td> <td>异步任务结果返回</td> </tr> <tr> <td>tokio::sync::watch</td> <td>状态监听，接收者看到最新状态</td> <td>配置变更监听</td> </tr> </tbody> </table> <h3 id="62-channel的选择指南">6.2 Channel的选择指南</h3> <ul> <li> <p><strong>crossbeam_channel</strong>：多对多的<strong>工作队列</strong>（消息被消费）</p> <ul> <li> <p><strong>任务分发</strong>：多个worker处理任务队列</p> </li> <li> <p><strong>负载均衡</strong>：分散工作负载</p> </li> <li> <p><strong>生产者-消费者模式</strong></p> </li> </ul> </li> <li> <p><strong>tokio::sync::broadcast</strong>：一对多的<strong>事件广播</strong>（消息被复制）</p> <ul> <li> <p><strong>事件通知</strong>：状态变化通知所有监听者</p> </li> <li> <p><strong>配置更新</strong>：新配置广播给所有组件</p> </li> <li> <p><strong>关闭信号</strong>：优雅关闭所有任务</p> </li> </ul> </li> <li> <p><strong>标准库中的channel</strong>：</p> <ul> <li> <p><code class="language-plaintext highlighter-rouge">std::sync::mpsc::channel()</code> - 异步无界channel</p> </li> <li> <p><code class="language-plaintext highlighter-rouge">std::sync::mpsc::sync_channel(bound)</code> - 同步有界channel</p> </li> </ul> </li> <li> <p><strong>async/await生态中的channel</strong>：</p> <ul> <li> <p><code class="language-plaintext highlighter-rouge">tokio::sync::mpsc</code> - Tokio的异步channel</p> </li> <li> <p><code class="language-plaintext highlighter-rouge">tokio::sync::oneshot</code> - 一次性channel，只能发送一个值</p> </li> <li> <p><code class="language-plaintext highlighter-rouge">tokio::sync::watch</code> - 状态监听channel，接收者能看到最新状态变化</p> </li> </ul> </li> <li> <p><strong>第三方crate中的高性能channel</strong>：</p> <ul> <li> <p><code class="language-plaintext highlighter-rouge">crossbeam-channel</code> - 功能更丰富，性能更好的channel实现</p> </li> <li> <p><code class="language-plaintext highlighter-rouge">flume</code> - 另一个高性能的channel库</p> </li> <li> <p><code class="language-plaintext highlighter-rouge">async-channel</code> - 支持async/await的channel</p> </li> </ul> </li> </ul> <h3 id="63-crossbeam-channel">6.3 Crossbeam Channel</h3> <p>Crossbeam提供了功能丰富的通道实现，支持多生产者多消费者模式，crossbeam的基本操作：</p> <div class="language-rust highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">use</span> <span class="n">crossbeam_channel</span> <span class="k">as</span> <span class="n">channel</span><span class="p">;</span>
+<span class="k">use</span> <span class="nn">std</span><span class="p">::</span><span class="n">thread</span><span class="p">;</span>
+<span class="k">use</span> <span class="nn">std</span><span class="p">::</span><span class="nn">time</span><span class="p">::</span><span class="n">Duration</span><span class="p">;</span>
+
+<span class="k">fn</span> <span class="nf">crossbeam_example</span><span class="p">()</span> <span class="p">{</span>
+    <span class="c1">// 1. 无界 channel</span>
+    <span class="k">let</span> <span class="p">(</span><span class="n">tx</span><span class="p">,</span> <span class="n">rx</span><span class="p">)</span> <span class="o">=</span> <span class="nn">channel</span><span class="p">::</span><span class="nn">unbounded</span><span class="p">::();</span>
+    
+    <span class="c1">// 2. 有界 channel  </span>
+    <span class="k">let</span> <span class="p">(</span><span class="n">tx_bounded</span><span class="p">,</span> <span class="n">rx_bounded</span><span class="p">)</span> <span class="o">=</span> <span class="nn">channel</span><span class="p">::</span><span class="nn">bounded</span><span class="p">::(</span><span class="mi">10</span><span class="p">);</span>
+    
+    <span class="c1">// 3. 零容量 channel（同步交换）</span>
+    <span class="k">let</span> <span class="p">(</span><span class="n">tx_sync</span><span class="p">,</span> <span class="n">rx_sync</span><span class="p">)</span> <span class="o">=</span> <span class="nn">channel</span><span class="p">::</span><span class="nn">bounded</span><span class="p">::(</span><span class="mi">0</span><span class="p">);</span>
+    
+    <span class="c1">// 发送端</span>
+    <span class="nn">thread</span><span class="p">::</span><span class="nf">spawn</span><span class="p">(</span><span class="k">move</span> <span class="p">||</span> <span class="p">{</span>
+        <span class="n">tx</span><span class="nf">.send</span><span class="p">(</span><span class="mi">42</span><span class="p">)</span><span class="nf">.unwrap</span><span class="p">();</span>
+        
+        <span class="c1">// 非阻塞发送</span>
+        <span class="k">match</span> <span class="n">tx_bounded</span><span class="nf">.try_send</span><span class="p">(</span><span class="mi">100</span><span class="p">)</span> <span class="p">{</span>
+            <span class="nf">Ok</span><span class="p">(</span><span class="n">_</span><span class="p">)</span> <span class="k">=&gt;</span> <span class="nd">println!</span><span class="p">(</span><span class="s">"Sent successfully"</span><span class="p">),</span>
+            <span class="nf">Err</span><span class="p">(</span><span class="nn">channel</span><span class="p">::</span><span class="nn">TrySendError</span><span class="p">::</span><span class="nf">Full</span><span class="p">(</span><span class="n">_</span><span class="p">))</span> <span class="k">=&gt;</span> <span class="nd">println!</span><span class="p">(</span><span class="s">"Channel full"</span><span class="p">),</span>
+            <span class="nf">Err</span><span class="p">(</span><span class="nn">channel</span><span class="p">::</span><span class="nn">TrySendError</span><span class="p">::</span><span class="nf">Disconnected</span><span class="p">(</span><span class="n">_</span><span class="p">))</span> <span class="k">=&gt;</span> <span class="nd">println!</span><span class="p">(</span><span class="s">"Disconnected"</span><span class="p">),</span>
+        <span class="p">}</span>
+        
+        <span class="c1">// 带超时的发送</span>
+        <span class="k">if</span> <span class="k">let</span> <span class="nf">Err</span><span class="p">(</span><span class="n">_</span><span class="p">)</span> <span class="o">=</span> <span class="n">tx_bounded</span><span class="nf">.send_timeout</span><span class="p">(</span><span class="mi">200</span><span class="p">,</span> <span class="nn">Duration</span><span class="p">::</span><span class="nf">from_millis</span><span class="p">(</span><span class="mi">100</span><span class="p">))</span> <span class="p">{</span>
+            <span class="nd">println!</span><span class="p">(</span><span class="s">"Send timeout"</span><span class="p">);</span>
+        <span class="p">}</span>
+    <span class="p">});</span>
+    
+    <span class="c1">// 接收端 - 多种接收方式</span>
+    <span class="nn">thread</span><span class="p">::</span><span class="nf">spawn</span><span class="p">(</span><span class="k">move</span> <span class="p">||</span> <span class="p">{</span>
+        <span class="c1">// 1. 阻塞接收</span>
+        <span class="k">let</span> <span class="n">value</span> <span class="o">=</span> <span class="n">rx</span><span class="nf">.recv</span><span class="p">()</span><span class="nf">.unwrap</span><span class="p">();</span>
+        
+        <span class="c1">// 2. 非阻塞接收</span>
+        <span class="k">match</span> <span class="n">rx_bounded</span><span class="nf">.try_recv</span><span class="p">()</span> <span class="p">{</span>
+            <span class="nf">Ok</span><span class="p">(</span><span class="n">val</span><span class="p">)</span> <span class="k">=&gt;</span> <span class="nd">println!</span><span class="p">(</span><span class="s">"Received: {}"</span><span class="p">,</span> <span class="n">val</span><span class="p">),</span>
+            <span class="nf">Err</span><span class="p">(</span><span class="nn">channel</span><span class="p">::</span><span class="nn">TryRecvError</span><span class="p">::</span><span class="n">Empty</span><span class="p">)</span> <span class="k">=&gt;</span> <span class="nd">println!</span><span class="p">(</span><span class="s">"Channel empty"</span><span class="p">),</span>
+            <span class="nf">Err</span><span class="p">(</span><span class="nn">channel</span><span class="p">::</span><span class="nn">TryRecvError</span><span class="p">::</span><span class="n">Disconnected</span><span class="p">)</span> <span class="k">=&gt;</span> <span class="nd">println!</span><span class="p">(</span><span class="s">"Disconnected"</span><span class="p">),</span>
+        <span class="p">}</span>
+        
+        <span class="c1">// 3. 带超时的接收</span>
+        <span class="k">match</span> <span class="n">rx_bounded</span><span class="nf">.recv_timeout</span><span class="p">(</span><span class="nn">Duration</span><span class="p">::</span><span class="nf">from_millis</span><span class="p">(</span><span class="mi">100</span><span class="p">))</span> <span class="p">{</span>
+            <span class="nf">Ok</span><span class="p">(</span><span class="n">val</span><span class="p">)</span> <span class="k">=&gt;</span> <span class="nd">println!</span><span class="p">(</span><span class="s">"Received: {}"</span><span class="p">,</span> <span class="n">val</span><span class="p">),</span>
+            <span class="nf">Err</span><span class="p">(</span><span class="nn">channel</span><span class="p">::</span><span class="nn">RecvTimeoutError</span><span class="p">::</span><span class="n">Timeout</span><span class="p">)</span> <span class="k">=&gt;</span> <span class="nd">println!</span><span class="p">(</span><span class="s">"Receive timeout"</span><span class="p">),</span>
+            <span class="nf">Err</span><span class="p">(</span><span class="nn">channel</span><span class="p">::</span><span class="nn">RecvTimeoutError</span><span class="p">::</span><span class="n">Disconnected</span><span class="p">)</span> <span class="k">=&gt;</span> <span class="nd">println!</span><span class="p">(</span><span class="s">"Disconnected"</span><span class="p">),</span>
+        <span class="p">}</span>
+        
+        <span class="c1">// 4. 选择操作（类似 Go 的 select）</span>
+        <span class="nn">channel</span><span class="p">::</span><span class="nd">select!</span> <span class="p">{</span>
+            <span class="nf">recv</span><span class="p">(</span><span class="n">rx</span><span class="p">)</span> <span class="k">-&gt;</span> <span class="n">msg</span> <span class="k">=&gt;</span> <span class="p">{</span>
+                <span class="k">if</span> <span class="k">let</span> <span class="nf">Ok</span><span class="p">(</span><span class="n">val</span><span class="p">)</span> <span class="o">=</span> <span class="n">msg</span> <span class="p">{</span>
+                    <span class="nd">println!</span><span class="p">(</span><span class="s">"Got from rx: {}"</span><span class="p">,</span> <span class="n">val</span><span class="p">);</span>
+                <span class="p">}</span>
+            <span class="p">},</span>
+            <span class="nf">recv</span><span class="p">(</span><span class="n">rx_bounded</span><span class="p">)</span> <span class="k">-&gt;</span> <span class="n">msg</span> <span class="k">=&gt;</span> <span class="p">{</span>
+                <span class="k">if</span> <span class="k">let</span> <span class="nf">Ok</span><span class="p">(</span><span class="n">val</span><span class="p">)</span> <span class="o">=</span> <span class="n">msg</span> <span class="p">{</span>
+                    <span class="nd">println!</span><span class="p">(</span><span class="s">"Got from rx_bounded: {}"</span><span class="p">,</span> <span class="n">val</span><span class="p">);</span>
+                <span class="p">}</span>
+            <span class="p">},</span>
+            <span class="n">default</span> <span class="k">=&gt;</span> <span class="p">{</span>
+                <span class="nd">println!</span><span class="p">(</span><span class="s">"No message available"</span><span class="p">);</span>
+            <span class="p">},</span>
+        <span class="p">}</span>
+    <span class="p">});</span>
+<span class="p">}</span>
+</code></pre></div></div> <p><strong>多生产者多消费者示例</strong></p> <div class="language-rust highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">use</span> <span class="n">crossbeam_channel</span> <span class="k">as</span> <span class="n">channel</span><span class="p">;</span>
+<span class="k">use</span> <span class="nn">std</span><span class="p">::</span><span class="n">thread</span><span class="p">;</span>
+<span class="k">use</span> <span class="nn">std</span><span class="p">::</span><span class="nn">time</span><span class="p">::</span><span class="n">Duration</span><span class="p">;</span>
+
+<span class="k">fn</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+    <span class="k">let</span> <span class="p">(</span><span class="n">tx</span><span class="p">,</span> <span class="n">rx</span><span class="p">)</span> <span class="o">=</span> <span class="nn">channel</span><span class="p">::</span><span class="nn">bounded</span><span class="p">::(</span><span class="mi">10</span><span class="p">);</span>
+    
+    <span class="c1">// 创建多个生产者</span>
+    <span class="k">for</span> <span class="n">producer_id</span> <span class="k">in</span> <span class="mi">0</span><span class="o">..</span><span class="mi">3</span> <span class="p">{</span>
+        <span class="k">let</span> <span class="n">tx_clone</span> <span class="o">=</span> <span class="n">tx</span><span class="nf">.clone</span><span class="p">();</span>
+        
+        <span class="nn">thread</span><span class="p">::</span><span class="nf">spawn</span><span class="p">(</span><span class="k">move</span> <span class="p">||</span> <span class="p">{</span>
+            <span class="k">for</span> <span class="n">msg_num</span> <span class="k">in</span> <span class="mi">0</span><span class="o">..</span><span class="mi">5</span> <span class="p">{</span>
+                <span class="k">let</span> <span class="n">message</span> <span class="o">=</span> <span class="nd">format!</span><span class="p">(</span><span class="s">"生产者{}-消息{}"</span><span class="p">,</span> <span class="n">producer_id</span><span class="p">,</span> <span class="n">msg_num</span><span class="p">);</span>
+                <span class="n">tx_clone</span><span class="nf">.send</span><span class="p">(</span><span class="n">message</span><span class="p">)</span><span class="nf">.unwrap</span><span class="p">();</span>
+                <span class="nn">thread</span><span class="p">::</span><span class="nf">sleep</span><span class="p">(</span><span class="nn">Duration</span><span class="p">::</span><span class="nf">from_millis</span><span class="p">(</span><span class="mi">100</span><span class="p">));</span>
+            <span class="p">}</span>
+            <span class="nd">println!</span><span class="p">(</span><span class="s">"生产者{} 完成发送"</span><span class="p">,</span> <span class="n">producer_id</span><span class="p">);</span>
+        <span class="p">});</span>
+    <span class="p">}</span>
+    
+    <span class="c1">// 创建多个消费者 (关键：rx.clone() 在 crossbeam 中是可以的！)</span>
+    <span class="k">for</span> <span class="n">consumer_id</span> <span class="k">in</span> <span class="mi">0</span><span class="o">..</span><span class="mi">2</span> <span class="p">{</span>
+        <span class="k">let</span> <span class="n">rx_clone</span> <span class="o">=</span> <span class="n">rx</span><span class="nf">.clone</span><span class="p">();</span>
+        
+        <span class="nn">thread</span><span class="p">::</span><span class="nf">spawn</span><span class="p">(</span><span class="k">move</span> <span class="p">||</span> <span class="p">{</span>
+            <span class="k">while</span> <span class="k">let</span> <span class="nf">Ok</span><span class="p">(</span><span class="n">message</span><span class="p">)</span> <span class="o">=</span> <span class="n">rx_clone</span><span class="nf">.recv</span><span class="p">()</span> <span class="p">{</span>
+                <span class="nd">println!</span><span class="p">(</span><span class="s">"消费者{} 收到: {}"</span><span class="p">,</span> <span class="n">consumer_id</span><span class="p">,</span> <span class="n">message</span><span class="p">);</span>
+                <span class="nn">thread</span><span class="p">::</span><span class="nf">sleep</span><span class="p">(</span><span class="nn">Duration</span><span class="p">::</span><span class="nf">from_millis</span><span class="p">(</span><span class="mi">200</span><span class="p">));</span> <span class="c1">// 模拟处理时间</span>
+            <span class="p">}</span>
+            <span class="nd">println!</span><span class="p">(</span><span class="s">"消费者{} 退出"</span><span class="p">,</span> <span class="n">consumer_id</span><span class="p">);</span>
+        <span class="p">});</span>
+    <span class="p">}</span>
+    
+    <span class="c1">// 丢弃原始的 tx 和 rx，让消费者知道没有更多的消息了</span>
+    <span class="nf">drop</span><span class="p">(</span><span class="n">tx</span><span class="p">);</span>
+    <span class="nf">drop</span><span class="p">(</span><span class="n">rx</span><span class="p">);</span>
+    
+    <span class="c1">// 等待所有线程完成</span>
+    <span class="nn">thread</span><span class="p">::</span><span class="nf">sleep</span><span class="p">(</span><span class="nn">Duration</span><span class="p">::</span><span class="nf">from_secs</span><span class="p">(</span><span class="mi">3</span><span class="p">));</span>
+<span class="p">}</span>
+</code></pre></div></div> <h3 id="64-标准库channel">6.4 标准库Channel</h3> <p>仅支持单个消费者</p> <div class="language-rust highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">use</span> <span class="nn">std</span><span class="p">::</span><span class="nn">sync</span><span class="p">::</span><span class="n">mpsc</span><span class="p">;</span>
+<span class="k">use</span> <span class="nn">std</span><span class="p">::</span><span class="n">thread</span><span class="p">;</span>
+<span class="k">use</span> <span class="nn">std</span><span class="p">::</span><span class="nn">time</span><span class="p">::</span><span class="n">Duration</span><span class="p">;</span>
+
+<span class="k">fn</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+    <span class="k">let</span> <span class="p">(</span><span class="n">tx</span><span class="p">,</span> <span class="n">rx</span><span class="p">)</span> <span class="o">=</span> <span class="nn">mpsc</span><span class="p">::</span><span class="nn">channel</span><span class="p">::();</span>
+    
+    <span class="c1">// 用循环创建多个生产者</span>
+    <span class="k">for</span> <span class="n">producer_id</span> <span class="k">in</span> <span class="mi">0</span><span class="o">..</span><span class="mi">5</span> <span class="p">{</span>
+        <span class="k">let</span> <span class="n">tx_clone</span> <span class="o">=</span> <span class="n">tx</span><span class="nf">.clone</span><span class="p">();</span>
+        
+        <span class="nn">thread</span><span class="p">::</span><span class="nf">spawn</span><span class="p">(</span><span class="k">move</span> <span class="p">||</span> <span class="p">{</span>
+            <span class="k">for</span> <span class="n">msg_num</span> <span class="k">in</span> <span class="mi">0</span><span class="o">..</span><span class="mi">3</span> <span class="p">{</span>
+                <span class="k">let</span> <span class="n">message</span> <span class="o">=</span> <span class="nd">format!</span><span class="p">(</span><span class="s">"生产者{}-消息{}"</span><span class="p">,</span> <span class="n">producer_id</span><span class="p">,</span> <span class="n">msg_num</span><span class="p">);</span>
+                <span class="n">tx_clone</span><span class="nf">.send</span><span class="p">(</span><span class="n">message</span><span class="p">)</span><span class="nf">.unwrap</span><span class="p">();</span>
+                <span class="nn">thread</span><span class="p">::</span><span class="nf">sleep</span><span class="p">(</span><span class="nn">Duration</span><span class="p">::</span><span class="nf">from_millis</span><span class="p">(</span><span class="mi">100</span> <span class="o">*</span> <span class="p">(</span><span class="n">producer_id</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)));</span>
+            <span class="p">}</span>
+            <span class="nd">println!</span><span class="p">(</span><span class="s">"生产者{} 完成发送"</span><span class="p">,</span> <span class="n">producer_id</span><span class="p">);</span>
+        <span class="p">});</span>
+    <span class="p">}</span>
+    
+    <span class="c1">// 丢弃原始 tx，这样当所有生产者完成后 channel 会自动关闭</span>
+    <span class="nf">drop</span><span class="p">(</span><span class="n">tx</span><span class="p">);</span>
+    
+    <span class="c1">// 单个消费者接收所有消息</span>
+    <span class="k">while</span> <span class="k">let</span> <span class="nf">Ok</span><span class="p">(</span><span class="n">message</span><span class="p">)</span> <span class="o">=</span> <span class="n">rx</span><span class="nf">.recv</span><span class="p">()</span> <span class="p">{</span>
+        <span class="nd">println!</span><span class="p">(</span><span class="s">"消费者收到: {}"</span><span class="p">,</span> <span class="n">message</span><span class="p">);</span>
+    <span class="p">}</span>
+    
+    <span class="nd">println!</span><span class="p">(</span><span class="s">"所有消息处理完毕"</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div></div> <h3 id="65-tokio广播channel">6.5 Tokio广播Channel</h3> <div class="language-rust highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// 典型的 broadcast 用法：关闭信号</span>
+<span class="k">use</span> <span class="nn">tokio</span><span class="p">::</span><span class="nn">sync</span><span class="p">::</span><span class="n">broadcast</span><span class="p">;</span>
+
+<span class="nd">#[tokio::main]</span>
+<span class="k">async</span> <span class="k">fn</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+    <span class="k">let</span> <span class="p">(</span><span class="n">shutdown_tx</span><span class="p">,</span> <span class="n">_</span><span class="p">)</span> <span class="o">=</span> <span class="nn">broadcast</span><span class="p">::</span><span class="nf">channel</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
+    
+    <span class="c1">// 启动多个任务</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="k">in</span> <span class="mi">0</span><span class="o">..</span><span class="mi">3</span> <span class="p">{</span>
+        <span class="k">let</span> <span class="k">mut</span> <span class="n">shutdown_rx</span> <span class="o">=</span> <span class="n">shutdown_tx</span><span class="nf">.subscribe</span><span class="p">();</span>
+        <span class="nn">tokio</span><span class="p">::</span><span class="nf">spawn</span><span class="p">(</span><span class="k">async</span> <span class="k">move</span> <span class="p">{</span>
+            <span class="nn">tokio</span><span class="p">::</span><span class="nd">select!</span> <span class="p">{</span>
+                <span class="n">_</span> <span class="o">=</span> <span class="nf">some_work</span><span class="p">()</span> <span class="k">=&gt;</span> <span class="nd">println!</span><span class="p">(</span><span class="s">"任务{}正常完成"</span><span class="p">,</span> <span class="n">i</span><span class="p">),</span>
+                <span class="n">_</span> <span class="o">=</span> <span class="n">shutdown_rx</span><span class="nf">.recv</span><span class="p">()</span> <span class="k">=&gt;</span> <span class="nd">println!</span><span class="p">(</span><span class="s">"任务{}收到关闭信号"</span><span class="p">,</span> <span class="n">i</span><span class="p">),</span>
+            <span class="p">}</span>
+        <span class="p">});</span>
+    <span class="p">}</span>
+    
+    <span class="c1">// 发送关闭信号给所有任务</span>
+    <span class="n">shutdown_tx</span><span class="nf">.send</span><span class="p">(())</span><span class="nf">.unwrap</span><span class="p">();</span>
+<span class="p">}</span>
+
+<span class="k">async</span> <span class="k">fn</span> <span class="nf">some_work</span><span class="p">()</span> <span class="p">{</span>
+    <span class="nn">tokio</span><span class="p">::</span><span class="nn">time</span><span class="p">::</span><span class="nf">sleep</span><span class="p">(</span><span class="nn">tokio</span><span class="p">::</span><span class="nn">time</span><span class="p">::</span><span class="nn">Duration</span><span class="p">::</span><span class="nf">from_secs</span><span class="p">(</span><span class="mi">10</span><span class="p">))</span><span class="k">.await</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div> <p>###</p> <h2 id="7-参考资源">7. 参考资源</h2> <ul> <li> <p><a href="https://doc.rust-lang.org/book/ch16-00-concurrency.html" rel="external nofollow noopener" target="_blank">Rust官方文档 - 并发章节</a></p> </li> <li> <p><a href="https://tokio.rs/tokio/tutorial" rel="external nofollow noopener" target="_blank">Tokio文档</a></p> </li> <li> <p><a href="https://github.com/crossbeam-rs/crossbeam" rel="external nofollow noopener" target="_blank">Crossbeam项目</a></p> </li> <li> <p><a href="https://marabos.nl/atomics/" rel="external nofollow noopener" target="_blank">《Rust原子和锁》</a></p> </li> </ul> </div> </article> <br> <hr> <br> <ul class="list-disc pl-8"></ul> <h2 class="text-3xl font-semibold mb-4 mt-12">Enjoy Reading This Article?</h2> <p class="mb-2">Here are some more articles you might like to read next:</p> <li class="my-2"> <a class="text-pink-700 underline font-semibold hover:text-pink-800" href="/blog/2024/solana-concepts/">Solana Core Concepts: Accounts, Programs, and PDAs</a> </li> <li class="my-2"> <a class="text-pink-700 underline font-semibold hover:text-pink-800" href="/blog/2024/python-asyncio/">Python3 Concurrency: asyncio module/async/await</a> </li> <li class="my-2"> <a class="text-pink-700 underline font-semibold hover:text-pink-800" href="/blog/2024/python-cheat-sheet/">Python Cheat Sheet</a> </li> <li class="my-2"> <a class="text-pink-700 underline font-semibold hover:text-pink-800" href="/blog/2023/raft-leader/">MIT6.824 Lab2A Raft Leader Election</a> </li> <li class="my-2"> <a class="text-pink-700 underline font-semibold hover:text-pink-800" href="/blog/2023/top/">Linux中的top command</a> </li> </div> </div> <footer class="fixed-bottom" role="contentinfo"> <div class="container mt-0"> © Copyright 2025 Xiaoye Zheng. Powered by <a href="https://jekyllrb.com/" target="_blank" rel="external nofollow noopener">Jekyll</a> with <a href="https://github.com/alshedivat/al-folio" rel="external nofollow noopener" target="_blank">al-folio</a> theme. Hosted by <a href="https://pages.github.com/" target="_blank" rel="external nofollow noopener">GitHub Pages</a>. </div> </footer> <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script> <script src="/assets/js/bootstrap.bundle.min.js"></script> <script src="https://cdn.jsdelivr.net/npm/mdbootstrap@4.20.0/js/mdb.min.js" integrity="sha256-NdbiivsvWt7VYCt6hYNT3h/th9vSTL4EDWeGs5SN3DA=" crossorigin="anonymous"></script> <script defer src="https://cdn.jsdelivr.net/npm/masonry-layout@4.2.2/dist/masonry.pkgd.min.js" integrity="sha256-Nn1q/fx0H7SNLZMQ5Hw5JLaTRZp0yILA/FRexe19VdI=" crossorigin="anonymous"></script> <script defer src="https://cdn.jsdelivr.net/npm/imagesloaded@5.0.0/imagesloaded.pkgd.min.js" integrity="sha256-htrLFfZJ6v5udOG+3kNLINIKh2gvoKqwEhHYfTTMICc=" crossorigin="anonymous"></script> <script defer src="/assets/js/masonry.js" type="text/javascript"></script> <script defer src="https://cdn.jsdelivr.net/npm/medium-zoom@1.1.0/dist/medium-zoom.min.js" integrity="sha256-ZgMyDAIYDYGxbcpJcfUnYwNevG/xi9OHKaR/8GK+jWc=" crossorigin="anonymous"></script> <script defer src="/assets/js/zoom.js?85ddb88934d28b74e78031fd54cf8308"></script> <script src="/assets/js/no_defer.js?2781658a0a2b13ed609542042a859126"></script> <script defer src="/assets/js/common.js?e0514a05c5c95ac1a93a8dfd5249b92e"></script> <script defer src="/assets/js/copy_code.js?12775fdf7f95e901d7119054556e495f" type="text/javascript"></script> <script defer src="/assets/js/jupyter_new_tab.js?d9f17b6adc2311cbabd747f4538bb15f"></script> <script async src="https://d1bxh8uas1mnw7.cloudfront.net/assets/embed.js"></script> <script async src="https://badge.dimensions.ai/badge.js"></script> <script type="text/javascript">window.MathJax={tex:{tags:"ams"}};</script> <script defer type="text/javascript" id="MathJax-script" src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-mml-chtml.js" integrity="sha256-MASABpB4tYktI2Oitl4t+78w/lyA+D7b/s9GEP0JOGI=" crossorigin="anonymous"></script> <script defer src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6" crossorigin="anonymous"></script> <script type="text/javascript">function progressBarSetup(){"max"in document.createElement("progress")?(initializeProgressElement(),$(document).on("scroll",function(){progressBar.attr({value:getCurrentScrollPosition()})}),$(window).on("resize",initializeProgressElement)):(resizeProgressBar(),$(document).on("scroll",resizeProgressBar),$(window).on("resize",resizeProgressBar))}function getCurrentScrollPosition(){return $(window).scrollTop()}function initializeProgressElement(){let e=$("#navbar").outerHeight(!0);$("body").css({"padding-top":e}),$("progress-container").css({"padding-top":e}),progressBar.css({top:e}),progressBar.attr({max:getDistanceToScroll(),value:getCurrentScrollPosition()})}function getDistanceToScroll(){return $(document).height()-$(window).height()}function resizeProgressBar(){progressBar.css({width:getWidthPercentage()+"%"})}function getWidthPercentage(){return getCurrentScrollPosition()/getDistanceToScroll()*100}const progressBar=$("#progress");window.onload=function(){setTimeout(progressBarSetup,50)};</script> <script src="/assets/js/vanilla-back-to-top.min.js?f40d453793ff4f64e238e420181a1d17"></script> <script>addBackToTop();</script> <script type="module" src="/assets/js/search/ninja-keys.min.js?a3446f084dcaecc5f75aa1757d087dcf"></script> <ninja-keys hidebreadcrumbs noautoloadmdicons placeholder="Type to start searching"></ninja-keys> <script>let searchTheme=determineComputedTheme();const ninjaKeys=document.querySelector("ninja-keys");"dark"===searchTheme?ninjaKeys.classList.add("dark"):ninjaKeys.classList.remove("dark");const openSearchModal=()=>{const e=$("#navbarNav");e.hasClass("show")&&e.collapse("hide"),ninjaKeys.open()};</script> <script>const ninja=document.querySelector("ninja-keys");ninja.data=[{id:"nav-about",title:"About",section:"Navigation",handler:()=>{window.location.href="/"}},{id:"nav-blog",title:"Blog",description:"",section:"Navigation",handler:()=>{window.location.href="/blog/"}},{id:"nav-publications",title:"Publications",description:"",section:"Navigation",handler:()=>{window.location.href="/publications/"}},{id:"nav-repositories",title:"Repositories",description:"",section:"Navigation",handler:()=>{window.location.href="/repositories/"}},{id:"dropdown-books",title:"Books",description:"",section:"Dropdown",handler:()=>{window.location.href=""}},{id:"dropdown-links",title:"Links",description:"",section:"Dropdown",handler:()=>{window.location.href=""}},{id:"post-rust-concurrency",title:"Rust Concurrency",description:"",section:"Posts",handler:()=>{window.location.href="/blog/2025/Rust-concurrency/"}},{id:"post-solana-core-concepts-accounts-programs-and-pdas",title:"Solana Core Concepts: Accounts, Programs, and PDAs",description:"",section:"Posts",handler:()=>{window.location.href="/blog/2024/solana-concepts/"}},{id:"post-python3-concurrency-asyncio-module-async-await",title:"Python3 Concurrency: asyncio module/async/await",description:"",section:"Posts",handler:()=>{window.location.href="/blog/2024/python-asyncio/"}},{id:"post-python-cheat-sheet",title:"Python Cheat Sheet",description:"",section:"Posts",handler:()=>{window.location.href="/blog/2024/python-cheat-sheet/"}},{id:"post-mit6-824-lab2a-raft-leader-election",title:"MIT6.824 Lab2A Raft Leader Election",description:"",section:"Posts",handler:()=>{window.location.href="/blog/2023/raft-leader/"}},{id:"post-linux\u4e2d\u7684top-command",title:"Linux\u4e2d\u7684top command",description:"",section:"Posts",handler:()=>{window.location.href="/blog/2023/top/"}},{id:"post-arm\u4ea4\u53c9\u7f16\u8bd1\u5de5\u5177\u94fe\u4e0e\u7f16\u8bd1\u9009\u9879",title:"ARM\u4ea4\u53c9\u7f16\u8bd1\u5de5\u5177\u94fe\u4e0e\u7f16\u8bd1\u9009\u9879",description:"",section:"Posts",handler:()=>{window.location.href="/blog/2023/cross-compile/"}},{id:"post-mit6-824-lab1-map-reduce",title:"MIT6.824 Lab1 Map Reduce",description:"",section:"Posts",handler:()=>{window.location.href="/blog/2023/map-reduce/"}},{id:"post-\u4f7f\u7528gcov-lcov\u6d4b\u8bd5\u7528\u4f8b\u7684\u4ee3\u7801\u8986\u76d6\u7387",title:"\u4f7f\u7528gcov/lcov\u6d4b\u8bd5\u7528\u4f8b\u7684\u4ee3\u7801\u8986\u76d6\u7387",description:"",section:"Posts",handler:()=>{window.location.href="/blog/2023/gcov/"}},{id:"post-rust\u7f16\u8bd1\u5668\u521d\u63a2-rust\u7f16\u8bd1\u5668\u662f\u5982\u4f55\u5de5\u4f5c\u7684",title:"rust\u7f16\u8bd1\u5668\u521d\u63a2\uff1aRust\u7f16\u8bd1\u5668\u662f\u5982\u4f55\u5de5\u4f5c\u7684",description:"",section:"Posts",handler:()=>{window.location.href="/blog/2023/rustc/"}},{id:"post-linux-kvm-x86\u5185\u5b58\u865a\u62df\u5316ept\u6e90\u4ee3\u7801\u5206\u6790",title:"Linux KVM x86\u5185\u5b58\u865a\u62df\u5316EPT\u6e90\u4ee3\u7801\u5206\u6790",description:"",section:"Posts",handler:()=>{window.location.href="/blog/2023/kvm-mem-source/"}},{id:"post-linux-kvm-x86-cpu\u865a\u62df\u5316\u539f\u7406\u53ca\u6e90\u4ee3\u7801\u5206\u6790",title:"Linux KVM x86 CPU\u865a\u62df\u5316\u539f\u7406\u53ca\u6e90\u4ee3\u7801\u5206\u6790",description:"",section:"Posts",handler:()=>{window.location.href="/blog/2023/kvm-cpu-virt/"}},{id:"post-\u8ba9google\u641c\u7d22\u5230\u4f60\u7684github\u7f51\u9875-\u4f7f\u7528jekyll\u642d\u5efa",title:"\u8ba9Google\u641c\u7d22\u5230\u4f60\u7684Github\u7f51\u9875\uff08\u4f7f\u7528Jekyll\u642d\u5efa\uff09",description:"",section:"Posts",handler:()=>{window.location.href="/blog/2023/add-Google-search/"}},{id:"post-x86\u5185\u5b58\u865a\u62df\u5316-\u5f71\u5b50\u9875\u8868-shadow-page-table-\u548c\u62d3\u5c55\u9875\u8868-ept",title:"x86\u5185\u5b58\u865a\u62df\u5316--\u5f71\u5b50\u9875\u8868(Shadow Page Table)\u548c\u62d3\u5c55\u9875\u8868(EPT)",description:"",section:"Posts",handler:()=>{window.location.href="/blog/2023/SPT-EPT/"}},{id:"post-rust\u88f8\u6307\u9488-\u5f15\u7528-slice-box-vec-string\u7684\u5185\u5b58\u5e03\u5c40\u53ca\u8f6c\u6362",title:"Rust\u88f8\u6307\u9488,\u5f15\u7528,slice,box,vec,string\u7684\u5185\u5b58\u5e03\u5c40\u53ca\u8f6c\u6362",description:"",section:"Posts",handler:()=>{window.location.href="/blog/2023/rust-type-mem-layout/"}},{id:"post-virtualization-tools-overwiew-for-layman",title:"Virtualization Tools Overwiew for Layman",description:"",section:"Posts",handler:()=>{window.location.href="/blog/2023/virtualization-tools/"}},{id:"post-rust-cheat-sheet-in-practice",title:"Rust Cheat Sheet in Practice",description:"",section:"Posts",handler:()=>{window.location.href="/blog/2023/rust-cheat-sheet/"}},{id:"post-\u7ebf\u5f62-\u975e\u7ebf\u5f62\u964d\u7ef4\u65b9\u6cd5\u6982\u8ff0",title:"\u7ebf\u5f62/\u975e\u7ebf\u5f62\u964d\u7ef4\u65b9\u6cd5\u6982\u8ff0",description:"",section:"Posts",handler:()=>{window.location.href="/blog/2023/dim-reduction/"}},{id:"post-qemu-kvm\u4e2d\u7684\u7f51\u7edc\u865a\u62df\u5316-part2-user-networking",title:"QEMU/KVM\u4e2d\u7684\u7f51\u7edc\u865a\u62df\u5316--Part2 User Networking",description:"",section:"Posts",handler:()=>{window.location.href="/blog/2023/qemu-network-slirp/"}},{id:"post-qemu-kvm-rust\u76f8\u5173\u5165\u95e8\u8d44\u6e90\u6574\u7406",title:"QEMU/KVM Rust\u76f8\u5173\u5165\u95e8\u8d44\u6e90\u6574\u7406",description:"",section:"Posts",handler:()=>{window.location.href="/blog/2023/kvm-101/"}},{id:"post-qemu-kvm\u4e2d\u7684\u7f51\u7edc\u865a\u62df\u5316-part1-overview",title:"QEMU/KVM\u4e2d\u7684\u7f51\u7edc\u865a\u62df\u5316--Part1 Overview",description:"",section:"Posts",handler:()=>{window.location.href="/blog/2023/qemu-network/"}},{id:"post-meltdown\u539f\u7406\u53caseed-lab\u5b9e\u9a8csetup",title:"Meltdown\u539f\u7406\u53caSEED Lab\u5b9e\u9a8csetup",description:"",section:"Posts",handler:()=>{window.location.href="/blog/2023/meltdown/"}},{id:"post-frp-learning-notes\u53ca\u76f8\u5173\u914d\u7f6e\u64cd\u4f5c",title:"frp learning notes\u53ca\u76f8\u5173\u914d\u7f6e\u64cd\u4f5c",description:"",section:"Posts",handler:()=>{window.location.href="/blog/2023/frp/"}},{id:"post-adaboosting-learning-notes",title:"AdaBoosting Learning notes",description:"",section:"Posts",handler:()=>{window.location.href="/blog/2023/AdaBoosting/"}},{id:"post-\u533a\u522barm\u4e0b\u7684armv9-a32-aarch64-cortex",title:"\u533a\u522bARM\u4e0b\u7684Armv9, A32, AArch64, Cortex...",description:"",section:"Posts",handler:()=>{window.location.href="/blog/2023/ARM_architect/"}},{id:"post-gdb\u5165\u95e8-\u5e38\u7528\u6307\u4ee4-\u811a\u672c-\u63d2\u4ef6",title:"GDB\u5165\u95e8\uff1a\u5e38\u7528\u6307\u4ee4\u3001\u811a\u672c\u3001\u63d2\u4ef6",description:"",section:"Posts",handler:()=>{window.location.href="/blog/2023/gdb_command/"}},{id:"post-ds-store\u662f\u4ec0\u4e48-\u600e\u4e48\u5220\u9664",title:".DS_store\u662f\u4ec0\u4e48\uff1f\u600e\u4e48\u5220\u9664\uff1f",description:"",section:"Posts",handler:()=>{window.location.href="/blog/2023/DS_store/"}},{id:"post-jekyll-learning-notes",title:"Jekyll Learning Notes",description:"",section:"Posts",handler:()=>{window.location.href="/blog/2023/jekyll/"}},{id:"post-useful-websites-amp-shortcuts",title:"Useful Websites & shortcuts",description:"",section:"Posts",handler:()=>{window.location.href="/blog/2023/useful-web/"}},{id:"post-support-vector-machine-svm-learning-notes",title:"Support Vector Machine (SVM) Learning notes",description:"",section:"Posts",handler:()=>{window.location.href="/blog/2023/SVM/"}},{id:"news-a-simple-inline-announcement",title:"A simple inline announcement.",description:"",section:"News"},{id:"news-a-long-announcement-with-details",title:"A long announcement with details",description:"",section:"News",handler:()=>{window.location.href="/news/announcement_2/"}},{id:"news-a-simple-inline-announcement-with-markdown-emoji-sparkles-smile",title:'A simple inline announcement with Markdown emoji! <img class="emoji" title=":sparkles:" alt=":sparkles:" src="https://github.githubassets.com/images/icons/emoji/unicode/2728.png" height="20" width="20"> <img class="emoji" title=":smile:" alt=":smile:" src="https://github.githubassets.com/images/icons/emoji/unicode/1f604.png" height="20" width="20">',description:"",section:"News"},{id:"socials-email",title:"Send email",section:"Socials",handler:()=>{window.open("mailto:%78%69%61%6F%79%65%7A@%7A%6A%75.%65%64%75.%63%6E","_blank")}},{id:"socials-google-scholar",title:"Google Scholar",section:"Socials",handler:()=>{window.open("https://scholar.google.com/citations?user=LJFW4ZIAAAAJ","_blank")}},{id:"socials-github",title:"GitHub",section:"Socials",handler:()=>{window.open("https://github.com/ZXXYy","_blank")}},{id:"socials-rss",title:"RSS Feed",section:"Socials",handler:()=>{window.open("/feed.xml","_blank")}},{id:"light-theme",title:"Change theme to light",description:"Change the theme of the site to Light",section:"Theme",handler:()=>{setThemeSetting("light")}},{id:"dark-theme",title:"Change theme to dark",description:"Change the theme of the site to Dark",section:"Theme",handler:()=>{setThemeSetting("dark")}},{id:"system-theme",title:"Use system default theme",description:"Change the theme of the site to System Default",section:"Theme",handler:()=>{setThemeSetting("system")}}];</script> <script src="/assets/js/shortcut-key.js?6f508d74becd347268a7f822bca7309d"></script> </body> </html>
